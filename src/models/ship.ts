@@ -1,7 +1,7 @@
 import {Schema,Model,model,Document,connect} from "mongoose"
 
 interface IShip extends Document{
-    shipId: Number,
+    shipId: number,
     emailUsername: string,
     name: string,
     

@@ -1,14 +1,14 @@
 import {Schema,Model,model,Document,connect} from "mongoose"
 
 interface IRacePoint extends Document{
-    racePointId: Number,
-    type: String, 
-    firstLongtitude : Number,
-    firstLatitude : Number, 
-    secondLongtitude : Number,
-    secondLatitude : Number,
-    eventId: Number,
-    racePointNumber : Number 
+    racePointId: number,
+    type: string, 
+    firstLongtitude : number,
+    firstLatitude : number, 
+    secondLongtitude : number,
+    secondLatitude : number,
+    eventId: number,
+    racePointNumber : number,
 }
 
 const RacePointSchema: Schema = new Schema({
