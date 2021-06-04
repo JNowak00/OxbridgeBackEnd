@@ -1,11 +1,11 @@
 
-import {endpoints} from './routes/userRoutes'
+import {app} from './controllers/user.controller'
 
 
 const port = 3000;
 
 
-const server = endpoints.listen(port,   () =>{
+const server = app.listen(port,   () =>{
     console.log('Running in this mode: '+process.env.NODE_ENV);
    console.log('This server is listening at port:' + port + 'ip: ');
 } );
