@@ -1,8 +1,5 @@
 import {Schema,Model,model,Document,connect} from "mongoose"
 
-
-
-
 interface IUser extends Document{
     firstname: string,
     lastname: string,
