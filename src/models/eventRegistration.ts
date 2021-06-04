@@ -1,11 +1,11 @@
 import {Schema,Model,model,Document,connect} from "mongoose"
 
 interface IEventReg extends Document{
-    eventRegId: Number,
-    shipId : Number,
-    eventId : Number,
-    trackColor : String,
-    teamName : String
+    eventRegId: number,
+    shipId : number,
+    eventId : number,
+    trackColor : string,
+    teamName : string
 }
 
 const EventRegSchema: Schema = new Schema({

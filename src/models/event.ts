@@ -1,11 +1,11 @@
 import {Schema,Model,model,Document,connect} from "mongoose"
 
 interface IEvent extends Document{
-    eventId: Number,
-    name: String, 
+    eventId: number,
+    name: string, 
     eventStart: Date,
     eventEnd: Date,
-    city: String,
+    city: string,
     eventCode: String,
     actualEventStart : Date,
     isLive : Boolean
