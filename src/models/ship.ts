@@ -4,7 +4,7 @@ interface IShip extends Document{
     shipId: number,
     emailUsername: string,
     name: string,
-    
+
 }
 
 const ShipSchema: Schema = new Schema({
