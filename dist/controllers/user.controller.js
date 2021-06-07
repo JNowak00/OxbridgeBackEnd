@@ -50,7 +50,7 @@ app.use(bodyParser.json());
 DB_1.DB.connect();
 // GetAllUsers
 function FindAll() {
-    app.get('/users', (req, res) => __awaiter(this, void 0, void 0, function* () {
+    app.get('', (req, res) => __awaiter(this, void 0, void 0, function* () {
         user_1.User.find().exec().then((results) => {
             return res.status(200).json(results);
         }).catch((error) => {
@@ -177,8 +177,5 @@ app.put('/users/:uid', (req, res) => {
     }).catch((error) => {
         return res.status(500).send({ message: error.message || "Internal Server Error" });
     });
-});
-app.get('*', (req, res) => {
-    return res.status(404).json({});
 });
 //# sourceMappingURL=user.controller.js.map

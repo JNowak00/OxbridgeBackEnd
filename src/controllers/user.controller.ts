@@ -6,7 +6,7 @@ import {User, IUser} from '../models/user'
 import { DB } from '../Sessions/DB';
 import * as bcrypt from 'bcrypt'
 import * as jwt from 'jsonwebtoken'
-import { Collection } from 'mongoose';
+import { AnyObject, Collection } from 'mongoose';
 
 
 
@@ -19,20 +19,19 @@ import { Collection } from 'mongoose';
  DB.connect();
 
  // GetAllUsers
- export function FindAll(){
-   app.get('', async (req,res) =>{
-    User.find().exec().then((results) =>{
-          return res.status(200).json( results);
+ app.get('/users', async (req,res) =>{
+  User.find().exec().then((results) =>{
+        return res.status(200).json( results);
 
-    }).catch((error)=>{
-      return res.status(500).json({
-          message: error.message,
-          error
-      });
-
+  }).catch((error)=>{
+    return res.status(500).json({
+        message: error.message,
+        error
     });
+
   });
-}
+});
+ 
 // GET USER BY USERNAME
 app.get('/users/:uid', (req,res) => {
 
@@ -98,6 +97,7 @@ User.findOne({ emailUsername: username }).exec().then((user) => {
     user.role = "user";
     user.save();
     const token = jwt.sign({ id: user.emailUsername, role: "user" }, secret, { expiresIn: 86400 });
+    
     res.status(201).send({ auth: true, token });
 }).catch((error) =>{
   return res.status(500).send({ message: error.message || "Some error occurred while retriving users" });
@@ -183,7 +183,4 @@ app.put('/users/:uid', (req,res) => {
 
     });
 });
-
-
-
-  export {app}
+  export { app}
