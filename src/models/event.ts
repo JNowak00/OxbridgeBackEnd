@@ -2,16 +2,17 @@ import {Schema,Model,model,Document,connect} from "mongoose"
 
 interface IEvent extends Document{
     eventId: number,
-    name: string, 
+    name: string,
     eventStart: Date,
     eventEnd: Date,
     city: string,
-    eventCode: String,
+    eventCode: string,
     actualEventStart : Date,
-    isLive : Boolean
+    isLive : boolean
 }
 
 const EventSchema: Schema = new Schema({
+
     eventId: {type: Number, required: true, unique: true},
     name: {type: String, required: true},
     eventStart: {type: Date, required: true},

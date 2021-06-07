@@ -1,5 +1,4 @@
 // const nodemailer = require("nodemailer");
-
 // let transport = nodemailer.createTransport({
 //     host: 'smtp.simply.com',
 //     port: 587,
@@ -8,7 +7,6 @@
 //        pass: 'dinsen123'
 //     }
 // });
-
 // const message = {
 //     from: 'kasper@doggoart.dk',
 //     to: 'kasperdinsen@gmail.com',
@@ -22,5 +20,5 @@
 //       console.log(info);
 //     }
 // });
-
 // module.exports = transport();
+//# sourceMappingURL=email.js.map

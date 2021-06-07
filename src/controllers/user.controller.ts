@@ -19,7 +19,8 @@ import { Collection } from 'mongoose';
  DB.connect();
 
  // GetAllUsers
- app.get('/users', async (req,res) =>{
+ export function FindAll(){
+   app.get('', async (req,res) =>{
     User.find().exec().then((results) =>{
           return res.status(200).json( results);
 
@@ -31,6 +32,7 @@ import { Collection } from 'mongoose';
 
     });
   });
+}
 // GET USER BY USERNAME
 app.get('/users/:uid', (req,res) => {
 
@@ -182,8 +184,6 @@ app.put('/users/:uid', (req,res) => {
     });
 });
 
-app.get('*', (req,res) =>{
-      return res.status(404).json({});
-    });
+
 
   export {app}
