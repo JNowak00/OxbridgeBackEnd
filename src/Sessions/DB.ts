@@ -1,5 +1,8 @@
 import {connect} from 'mongoose';
+
 export class DB{
+
+
   static async connect():Promise<void> {
 
 
@@ -12,4 +15,7 @@ export class DB{
             });
             console.log("connected")
         }
+
+
     }
+

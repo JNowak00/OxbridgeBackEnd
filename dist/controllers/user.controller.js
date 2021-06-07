@@ -175,7 +175,4 @@ app.put('/users/:uid', (req, res) => {
         return res.status(500).send({ message: error.message || "Internal Server Error" });
     });
 });
-app.get('*', (req, res) => {
-    return res.status(404).json({});
-});
 //# sourceMappingURL=user.controller.js.map

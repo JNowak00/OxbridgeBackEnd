@@ -2,9 +2,9 @@ import {Schema,Model,model,Document,connect} from "mongoose"
 
 interface IRacePoint extends Document{
     racePointId: number,
-    type: string, 
+    type: string,
     firstLongtitude : number,
-    firstLatitude : number, 
+    firstLatitude : number,
     secondLongtitude : number,
     secondLatitude : number,
     eventId: number,
