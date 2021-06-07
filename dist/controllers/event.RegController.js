@@ -1,48 +1,46 @@
-/*import express from 'express';
-import cors from 'cors';
-import * as bodyParser from 'body-parser';
-import * as dotenv from 'dotenv';
-import {Event, IEvent} from '../models/event'
-import { DB } from '../Sessions/DB';
-import * as bcrypt from 'bcrypt'
-import * as jwt from 'jsonwebtoken'
-import { Collection } from 'mongoose';
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = __importDefault(require("express"));
+const cors_1 = __importDefault(require("cors"));
+const bodyParser = __importStar(require("body-parser"));
+const dotenv = __importStar(require("dotenv"));
+const DB_1 = require("../Sessions/DB");
+dotenv.config({ path: 'config/week10.env' });
+const app = express_1.default();
+const secret = 'secret';
+app.use(cors_1.default());
+app.use(express_1.default.static('public'));
+app.use(bodyParser.json());
+DB_1.DB.connect();
+/*export function CreateEvent() {
+   app.get('/events', async (req,res) =>{});
 
-
-
-
- dotenv.config({ path: 'config/week10.env' });
- const app = express();
- const secret = 'secret';
- app.use(cors());
- app.use(express.static('public'));
- app.use(bodyParser.json());
- DB.connect();
-
-export function CreateEvent() {
-    app.get('/events', async (req,res) =>{
-
-    // Checking if authorized
-   /* Auth.Authorize(req, res, "admin", function (err) {
-        if (err)
-            return err;
+   // Checking if authorized
+  /* Auth.Authorize(req, res, "admin", function (err) {
+       if (err)
+           return err;
 // */
-//         let event = new Event(req.body);
-//         Event.findOne().sort('-eventId').exec().then((lastEvent) =>{
-//             if(lastEvent){
-//                 event.eventId = lastEvent.eventId +1;
-//             }
-//             else{
-//                 event.eventId = 1;
-//             }
-//             event.save();
-//             return res.status(201).json(event);
-//         }).catch((error) =>{
-//             if(error)
-//             return res.status(500).send({message: error.message || "Internal server Error"});
-//         });
-//     });
-// }
-// export function hasRoute(){
-// }
+//     const registration = new EventReg
 //# sourceMappingURL=event.RegController.js.map
