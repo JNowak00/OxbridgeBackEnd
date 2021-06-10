@@ -7,6 +7,7 @@ import { DB } from '../Sessions/DB';
 import * as bcrypt from 'bcrypt'
 import * as jwt from 'jsonwebtoken'
 import { Collection } from 'mongoose';
+import {Mail} from '../Mail';
 
 
 
@@ -95,6 +96,7 @@ User.findOne({ emailUsername: username }).exec().then((user) => {
     user.password = hashedPassword;
     user.role = "user";
     user.save();
+
     const token = jwt.sign({ id: user.emailUsername, role: "user" }, secret, { expiresIn: 86400 });
     res.status(201).send({ auth: true, token });
 }).catch((error) =>{
@@ -181,5 +183,9 @@ app.put('/users/:uid', (req,res) => {
 
     });
 });
+
+app.get('*', (req,res) =>{
+      return res.status(404).json({});
+    });
 
   export {app}

@@ -31,7 +31,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.app = void 0;
+exports.app = exports.FindAll = void 0;
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const bodyParser = __importStar(require("body-parser"));
@@ -49,16 +49,19 @@ app.use(express_1.default.static('public'));
 app.use(bodyParser.json());
 DB_1.DB.connect();
 // GetAllUsers
-app.get('/users', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    user_1.User.find().exec().then((results) => {
-        return res.status(200).json(results);
-    }).catch((error) => {
-        return res.status(500).json({
-            message: error.message,
-            error
+function FindAll() {
+    app.get('/users', (req, res) => __awaiter(this, void 0, void 0, function* () {
+        user_1.User.find().exec().then((results) => {
+            return res.status(200).json(results);
+        }).catch((error) => {
+            return res.status(500).json({
+                message: error.message,
+                error
+            });
         });
-    });
-}));
+    }));
+}
+exports.FindAll = FindAll;
 // GET USER BY USERNAME
 app.get('/users/:uid', (req, res) => {
     user_1.User.findOne({ emailUsername: req.params.uid }).exec().then((result) => {

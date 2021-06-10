@@ -12,6 +12,7 @@ interface IEvent extends Document{
 }
 
 const EventSchema: Schema = new Schema({
+
     eventId: {type: Number, required: true, unique: true},
     name: {type: String, required: true},
     eventStart: {type: Date, required: true},
