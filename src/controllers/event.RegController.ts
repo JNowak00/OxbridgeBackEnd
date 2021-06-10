@@ -27,21 +27,17 @@ import {Event} from '../models/event'
 
 
       const reg = new EventReg(req.body);
-      module.exports.CreateRegistration(reg,res, function(error: any, reg : IEventReg){
-         if(error){
-            return error;
-            
-         }
+      module.exports.CreateRegistration(reg,res);
          return res.status(201).json(reg);
-      }
+    }
          );
-      });    
+
  exports.CreateRegistration = (newRegistration: IEventReg,res:  any, callback: any) =>{
 
       EventReg.findOne({}).sort('-eventRegId').exec().then((_lastEventRegistration) =>{
          if(_lastEventRegistration)
          newRegistration.eventRegId = _lastEventRegistration.eventRegId+1;
-         
+
          else{
             newRegistration.eventRegId = 1;
 
@@ -52,9 +48,9 @@ import {Event} from '../models/event'
       }).catch((error) =>{
             if(error){
                return callback(res.send(error));
-               
+
             }
-            
+
       });
 
     }
@@ -73,20 +69,21 @@ app.get('/eventRegistrations/', async (req,res) =>{
 })
 /**
  * Get Participants from Event using EventId
- * 
+ *
  */
 let pending = 0;
 app.get('/eventRegistrations/getParticipants/:eventId', async (req,res) =>{
 
-   let participants: any = [{}];
-   EventReg.find({eventId: parseInt(req.params.eventId)}).exec().then((eventRegs) =>{
+   const participants: any = [{}];
+   const eventID = parseInt(req.params.eventId, 10);
+   EventReg.find({eventId: eventID}).exec().then((eventRegs) =>{
       if(!eventRegs||eventRegs.length ===0)
          return res.status(404).send("NO PARTICIPANT FOUND")
          if(eventRegs){
             eventRegs.forEach(eventRegistration =>{
                pending++;
                Ship.findOne({shipId: eventRegistration.shipId}).exec().then((ship) =>{
-                  if(!ship){     
+                  if(!ship){
                    return res.status(404).send('Ship Not Found');
 }
                   else if(ship){
@@ -139,7 +136,8 @@ Ship.find({emailUsername: req.body.emailUsername}).exec().then((ships)=>{
 
    ships.forEach(ship =>{
 pending2++;
-EventReg.find({eventId: parseInt(req.params.eventId), shipId: ship.shipId}).exec().then((eventRegistration) =>{
+const eventID = parseInt(req.params.eventId,10);
+EventReg.find({eventId: eventID, shipId: ship.shipId}).exec().then((eventRegistration) =>{
 pending2--;
 if(eventRegistration){
    return res.status(200).send(eventRegistration);
@@ -178,7 +176,7 @@ app.post('/eventRegistrations/signUp', async (req,res) =>{
             registration.eventId = _event.eventId;
             module.exports.CreateRegistration(registration,res)
                return res.status(201).json(registration)
-               }    
+               }
 
       }).catch((error) =>{
 
@@ -195,7 +193,7 @@ app.post('/eventRegistrations/signUp', async (req,res) =>{
 
 /**
  * Add PARTICIPANT TO EVENT/CREATE ONE PARTICIPANT
- * 
+ *
  */
 app.post('/eventRegistrations/addParticipant', async (req,res) =>{
 
@@ -232,8 +230,8 @@ if(!ship){
            "eventId": req.body.eventId,
             "shipId": newShip.shipId,
             "trackColor": "Yellow",
-            "teamName": req.body.teamName}); 
-            module.exports.CreateRegistration(newEventRegistration,res)       
+            "teamName": req.body.teamName});
+            module.exports.CreateRegistration(newEventRegistration,res)
 
    }).catch((error) =>{
 
@@ -249,8 +247,8 @@ else{
         "eventId": req.body.eventId,
          "shipId": ship.shipId,
          "trackColor": "Yellow",
-         "teamName": req.body.teamName}); 
-         module.exports.CreateRegistration(newEventRegistration,res)  
+         "teamName": req.body.teamName});
+         module.exports.CreateRegistration(newEventRegistration,res)
 
 }
 
@@ -272,10 +270,11 @@ else{
 
 
 });
-//Update User with EventRegId
+// Update User with EventRegId
 app.put('/eventRegistrations/updateParticipant/:eventRegId', async (req,res) =>{
 
- EventReg.findOneAndUpdate({eventRegId: parseInt(req.params.eventRegId)}, req.body).exec().then((eventReg)=>{
+ const  eventID = parseInt(req.params.eventRegId,10);
+ EventReg.findOneAndUpdate({eventRegId: eventID}, req.body).exec().then((eventReg)=>{
 
    if(eventReg){
       Ship.findOneAndUpdate({shipId: eventReg.shipId}, req.body).exec().then((ship)=>{
@@ -320,7 +319,8 @@ app.put('/eventRegistrations/updateParticipant/:eventRegId', async (req,res) =>{
 
 app.delete('/eventRegistrations/:eventRegId', async (req,res) =>{
 
-   EventReg.findOneAndDelete({eventRegId: parseInt(req.params.eventRegId)}).exec().then((eventRegistration)=>{
+   const eventRID = parseInt(req.params.eventRegId,10)
+   EventReg.findOneAndDelete({eventRegId: eventRID}).exec().then((eventRegistration)=>{
       if(!eventRegistration){
          return res.status(404).send({message: "Event registration not found wit eventRegId: "+ req.params.eventRegId})
       }

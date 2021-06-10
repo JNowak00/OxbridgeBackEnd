@@ -25,21 +25,21 @@ import {Ship, IShip} from '../models/ship'
 
 
 
- 
+
  app.post('/locationRegistrations/', async (req,res) =>{
 
-    var locationRegistration = new LocationReg(req.body);
+    const locationRegistration = new LocationReg(req.body);
     module.exports.createLocationRegistration(locationRegistration, res, (error: any, locationReg: any) =>{
 
 
         return res.status(201).json(locationReg);
     });
-      
+
  });
  exports.createLocationRegistration = (newLocationRegistration: any, res: any, callback: any) => {
 
 
-    newLocationRegistration.locationTime.setHours(newLocationRegistration.locationTime.getHours()+2); 
+    newLocationRegistration.locationTime.setHours(newLocationRegistration.locationTime.getHours()+2);
     CheckRacePoint(newLocationRegistration, res, function (updatedRegistration: any) {
         if (updatedRegistration) {
             newLocationRegistration = updatedRegistration
@@ -52,13 +52,13 @@ import {Ship, IShip} from '../models/ship'
                     newLocationRegistration.regId = 1;
 
                 newLocationRegistration.save();
-                       
+
                     return callback(null, newLocationRegistration);
                 }).catch((error)=>{
                     return callback(res.status(500).send({ message: error.message || "Some error occurred while retriving locationRegistrations" }));
-                    
+
                 });
-        
+
         }
     });
 };
@@ -67,14 +67,14 @@ import {Ship, IShip} from '../models/ship'
 
 function CheckRacePoint(registration: any, res: any, callback: any) {
     EventReg.findOne({ eventRegId: registration.eventRegId }, { _id: 0, __v: 0 }).exec().then((eventRegistration)=>{
-        var nextRacePointNumber = 2;
+        let nextRacePointNumber = 2;
         LocationReg.findOne({ eventRegId: registration.eventRegId }, { _id: 0, __v: 0 }, { sort: { 'locationTime': -1 } }).exec().then((locationRegistration)=> {
 
-            
+
             if (locationRegistration) {
                 nextRacePointNumber = locationRegistration.racePointNumber + 1;
                 if (locationRegistration.finishTime != null) {
-                    var updatedRegistration = registration;
+                    const updatedRegistration = registration;
                     updatedRegistration.racePointNumber = locationRegistration.racePointNumber;
                     updatedRegistration.raceScore = locationRegistration.raceScore;
                     updatedRegistration.finishTime = locationRegistration.finishTime;
@@ -86,22 +86,22 @@ function CheckRacePoint(registration: any, res: any, callback: any) {
 
                     if (_event && _event.isLive) {
 
-                        //Finds the next racepoint and calculates the ships distance to the racepoint
-                        //and calculates the score based on the distance
+                        // Finds the next racepoint and calculates the ships distance to the racepoint
+                        // and calculates the score based on the distance
                         RacePoint.findOne({ eventId: eventRegistration.eventId, racePointNumber: nextRacePointNumber }, { _id: 0, __v: 0 }).exec().then((nextRacePoint) => {
 
                             if (nextRacePoint) {
                                 FindDistance(registration, nextRacePoint,  (distance: any) => {
                                     if (distance < 25) {
 
-                                        if (nextRacePoint.type != "finishLine") {
+                                        if (nextRacePoint.type !== "finishLine") {
                                             RacePoint.findOne({ eventId: eventRegistration.eventId, racePointNumber: nextRacePoint.racePointNumber + 1 }, { _id: 0, __v: 0 }).exec().then((newNextRacePoint)=>{
 
                                                 if (newNextRacePoint) {
                                                     FindDistance(registration, newNextRacePoint, (nextPointDistance: any) =>{
                                                         distance = nextPointDistance;
 
-                                                        var updatedRegistration = registration;
+                                                        const updatedRegistration = registration;
                                                         updatedRegistration.racePointNumber = nextRacePointNumber;
                                                         updatedRegistration.raceScore = ((nextRacePointNumber) * 10) + ((nextRacePointNumber) / distance);
                                                         return callback(updatedRegistration)
@@ -109,46 +109,46 @@ function CheckRacePoint(registration: any, res: any, callback: any) {
                                                 }
 
                                                 else {
-                                                    var updatedRegistration = registration;
+                                                    const updatedRegistration = registration;
                                                     updatedRegistration.racePointNumber = nextRacePointNumber;
                                                     updatedRegistration.finishTime = registration.locationTime
-                                                    var ticks = ((registration.locationTime.getTime() * 10000) + 621355968000000000);
+                                                    const ticks = ((registration.locationTime.getTime() * 10000) + 621355968000000000);
                                                     updatedRegistration.raceScore = (1000000000000000000 - ticks) / 1000000000000
                                                     return callback(updatedRegistration);
                                                 }
-                                            
+
                                     }).catch((error) =>{
                                         return callback(res.status(500).send({ message: error.message || "Some error occurred while retriving racepoints" }));
                                     })}
 
                                     else{
-                                        var updatedRegistration = registration;
+                                        const updatedRegistration = registration;
                                         updatedRegistration.racePointNumber = nextRacePointNumber - 1;
                                         updatedRegistration.raceScore = ((nextRacePointNumber - 1) * 10) + ((nextRacePointNumber - 1) / distance);
                                         return callback(updatedRegistration)
                                     }
                                 }
                              else {
-                                var updatedRegistration = registration;
+                                const updatedRegistration = registration;
                                 updatedRegistration.racePointNumber = 1;
                                 updatedRegistration.raceScore = 0;
                                 return callback(updatedRegistration)
                             }
                         });
                     }else {
-                        var updatedRegistration = registration;
+                        const updatedRegistration = registration;
                         updatedRegistration.racePointNumber = 1;
                         updatedRegistration.raceScore = 0;
                         return callback(updatedRegistration)
                     }
                 }).catch((error)=>{
                     return callback(res.status(500).send({ message: error.message || "Some error occurred while retriving racepoints" }));
-                })  
+                })
             }
         }).catch((error)=>{
                     return callback(res.status(500).send({ message: error.message || "Some error occurred while retriving events" }));
-                })     
-            
+                })
+
 
 
        }}).catch((error)=>{
@@ -159,76 +159,76 @@ function CheckRacePoint(registration: any, res: any, callback: any) {
         return callback(res.status(500).send({ message: error.message || "Some error occurred while retriving eventRegistrations" }));
     })
 }
- 
+
 function FindDistance(registration: any, racePoint: any, callback: any) {
     const checkPoint1 = { longtitude: Number,
         latitude: Number};
     const checkPoint2 = {
         longtitude: Number,
         latitude: Number};
- 
+
 
     checkPoint1.longtitude = racePoint.firstLongtitude;
     checkPoint1.latitude = racePoint.firstLatitude;
     checkPoint2.longtitude = racePoint.secondLongtitude;
     checkPoint2.latitude = racePoint.secondLatitude;
 
-    var AB = CalculateDistance(checkPoint1, checkPoint2);
-    var BC = CalculateDistance(checkPoint2, registration);
-    var AC = CalculateDistance(checkPoint1, registration);
+    const AB = CalculateDistance(checkPoint1, checkPoint2);
+    const BC = CalculateDistance(checkPoint2, registration);
+    const AC = CalculateDistance(checkPoint1, registration);
 
-    var P = (AB + BC + AC) / 2;
-    var S = Math.sqrt(P * (P - AC) * (P - AB) * (P - AC));
+    const P = (AB + BC + AC) / 2;
+    const S = Math.sqrt(P * (P - AC) * (P - AB) * (P - AC));
 
-    var result = 2 * S / AB;
+    const result = 2 * S / AB;
     return callback(result)
 }
 function CalculateDistance(first: any, second: any) {
-    var R = 6371e3; // metres
-    var φ1 = first.latitude * Math.PI / 180; // φ, λ in radians
-    var φ2 = second.latitude * Math.PI / 180;
-    var Δφ = (second.latitude - first.latitude) * Math.PI / 180;
-    var Δλ = (second.longtitude - first.longtitude) * Math.PI / 180;
+    const R = 6371e3; // metres
+    const φ1 = first.latitude * Math.PI / 180; // φ, λ in radians
+    const φ2 = second.latitude * Math.PI / 180;
+    const Δφ = (second.latitude - first.latitude) * Math.PI / 180;
+    const Δλ = (second.longtitude - first.longtitude) * Math.PI / 180;
 
-    var a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
         Math.cos(φ1) * Math.cos(φ2) *
         Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-    var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-    var d = R * c;
+    const d = R * c;
 
     return d;
 }
 
-     
-           
 
-        //Checks which racepoint the ship has reached last
-       
-       
-    
+
+
+        // Checks which racepoint the ship has reached last
+
+
+
 
 
         let pending = 0;
  app.get('/locationRegistrations/getLive/:eventId', async (req,res) =>{
     EventReg.find({ eventId: parseInt(req.params.eventId) }, { _id: 0, __v: 0 }).exec().then((eventRegistrations) => {
-       
 
-        var fewRegistrations:any[];
+
+        const fewRegistrations:any[] = [];
         eventRegistrations.forEach(eventRegistration => {
             pending++
 
             LocationReg.find({ eventRegId: eventRegistration.eventRegId }, { _id: 0, __v: 0 }, { sort: { 'locationTime': -1 }, limit: 20 }).exec().then((locationRegistration) => {
                 pending--;
-               
-                if (locationRegistration.length != 0) {
-                   let boatLocations = { "locationsRegistrations": locationRegistration, "color": eventRegistration.trackColor, "shipId": eventRegistration.shipId, "teamName": eventRegistration.teamName }
+
+                if (locationRegistration.length !== 0) {
+                   const boatLocations = { "locationsRegistrations": locationRegistration, "color": eventRegistration.trackColor, "shipId": eventRegistration.shipId, "teamName": eventRegistration.teamName }
                     fewRegistrations.push(boatLocations);
 
                 }
-                if (pending == 0) {
-                    if (fewRegistrations.length != 0) {
-                        if (fewRegistrations[0].locationRegistration[0].raceScore != 0) {
+                if (pending === 0) {
+                    if (fewRegistrations.length !== 0) {
+                        if (fewRegistrations[0].locationRegistration[0].raceScore !== 0) {
                             fewRegistrations.sort((a, b) => (a.locationsRegistrations[0].raceScore >= b.locationsRegistrations[0].raceScore) ? -1 : 1)
 
                             for (let i = 0; i < fewRegistrations.length; i++) {
@@ -253,17 +253,17 @@ function CalculateDistance(first: any, second: any) {
  });
  let pending2 =0;
  app.get('/locationRegistrations/getReplay/:eventId', async (req,res) =>{
-    EventReg.find({ eventId: parseInt(req.params.eventId) }, { _id: 0, __v: 0 }).exec().then((eventRegistrations) =>{
+    EventReg.find({ eventId: parseInt(req.params.eventId,10) }, { _id: 0, __v: 0 }).exec().then((eventRegistrations) =>{
 
         if (eventRegistrations.length !== 0) {
-            var shipLocations:any[];
+            const shipLocations:any[] =[];
             eventRegistrations.forEach(eventRegistration => {
                 pending2++
                 LocationReg.find({ eventRegId: eventRegistration.eventRegId }, { _id: 0, __v: 0 }, { sort: { 'locationTime': 1 } }).exec().then((locationRegistrations) =>{
                     pending2--
-                  
+
                     if (locationRegistrations) {
-                        var shipLocation = { "locationsRegistrations": locationRegistrations, "color": eventRegistration.trackColor, "shipId": eventRegistration.shipId, "teamName": eventRegistration.teamName }
+                        const shipLocation = { "locationsRegistrations": locationRegistrations, "color": eventRegistration.trackColor, "shipId": eventRegistration.shipId, "teamName": eventRegistration.teamName }
                         shipLocations.push(shipLocation)
                     }
                     if (pending2 === 0) {
@@ -286,29 +286,29 @@ function CalculateDistance(first: any, second: any) {
  app.get('/locationRegistrations/getScoreboard/:eventId', async (req,res) =>{
 
     EventReg.find({ eventId: parseInt(req.params.eventId) }, { _id: 0, __v: 0 }).exec().then((eventRegistrations) => {
-      
-           
+
+
         if (eventRegistrations.length !== 0) {
-            let scores:any[];
+            const scores:any[] = [];
             eventRegistrations.forEach(eventReg => {
                 pending3++;
                 LocationReg.find({ eventRegId: eventReg.eventRegId }, { _id: 0, __v: 0 }, { sort: { 'locationTime': -1 }, limit: 1 }).exec().then((locationRegistration)=> {
-                  
-                        
+
+
                     if (locationRegistration.length !== 0) {
                         Ship.findOne({ shipId: eventReg.shipId }, { _id: 0, __v: 0 }).exec().then((ship) =>{
-                          
+
 
                             User.findOne({ emailUsername: ship.emailUsername }, { _id: 0, __v: 0 }).exec().then((user)=> {
                                 pending3--;
-                                
+
                                 if (user) {
                                    const score = { "locationsRegistrations": locationRegistration, "color": eventReg.trackColor, "shipId": eventReg.shipId, "shipName": ship.name, "teamName": eventReg.teamName, "owner": user.firstname + " " + user.lastname };
                                     scores.push(score);
                                 }
                                 if (pending3 === 0) {
-                                    if (scores.length != 0) {
-                                        if (scores[0].locationsRegistrations[0].raceScore != 0) {
+                                    if (scores.length !== 0) {
+                                        if (scores[0].locationsRegistrations[0].raceScore !== 0) {
                                             scores.sort((a, b) => (a.locationsRegistrations[0].raceScore >= b.locationsRegistrations[0].raceScore) ? -1 : 1)
 
                                             for (let i = 0; i < scores.length; i++) {
@@ -347,7 +347,7 @@ function CalculateDistance(first: any, second: any) {
  app.delete('/locationRegistrations/deleteFromEventRegId/:eventId', async (req,res) =>{
 
     LocationReg.deleteMany({ eventRegId: parseInt(req.params.eventId) }).exec().then((locationRegistrations) => {
-      
+
         if (!locationRegistrations)
             return res.status(404).send({ message: "LocationRegistrations not found with eventRegId " + req.params.eventId });
 
@@ -356,4 +356,3 @@ function CalculateDistance(first: any, second: any) {
         return res.status(500).send({ message: "Error deleting locationRegistrations with eventRegId " + req.params.eventId });
     });
  });
- 

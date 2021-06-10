@@ -37,7 +37,7 @@ import { EventReg } from '../models/eventRegistration';
             ship.save()
             return res.status(201).json(ship);
         }).catch((error) =>{
-            
+
             return res.status(500).send({message: error.message|| "Some error occurred"})
         })
  });
@@ -55,9 +55,9 @@ import { EventReg } from '../models/eventRegistration';
     });
  });
 /**
- * 
+ *
  * Get all ships
- * 
+ *
  */
  app.get('/ships', async (req,res) =>{
 
@@ -65,16 +65,16 @@ import { EventReg } from '../models/eventRegistration';
         res.status(200).json(ships);
     }).catch((error) =>{
         return res.status(500).send({ message: error.message || "Some error occurred while retriving ships" });
-   
-         })     
+
+         })
  });
 
 
 
  /**
-  * 
+  *
   * Get Single ship
-  * 
+  *
   */
  app.get('/ships/:shipId', async (req,res) =>{
 
@@ -86,7 +86,7 @@ import { EventReg } from '../models/eventRegistration';
        return res.status(200).json(ship);
     }).catch((error) =>{
         return res.status(500).send({ message: "Error retrieving ship with shipId " + req.params.shipId });
-    }) 
+    })
 });
 
 
@@ -99,12 +99,12 @@ import { EventReg } from '../models/eventRegistration';
 app.get('/ships/fromEventId/:eventId', async (req,res) =>{
 
 EventReg.find({ eventId: parseInt(req.params.eventId) }).exec().then((eventRegistrations) =>{
-   
-   
-    if (eventRegistrations.length != 0) {
 
-        let ships = [{}];
-        eventRegistrations.forEach(eventRegistration => 
+
+    if (eventRegistrations.length !== 0) {
+
+        const ships = [{}];
+        eventRegistrations.forEach(eventRegistration =>
             {
             pending++;
 
@@ -123,8 +123,8 @@ EventReg.find({ eventId: parseInt(req.params.eventId) }).exec().then((eventRegis
                 return res.status(500).send({ message: error.message || "Some error occurred while retriving bikeRacks" });
 
             })
-               
-         
+
+
         });
     } else {
         res.status(200).json({});
@@ -135,7 +135,7 @@ EventReg.find({ eventId: parseInt(req.params.eventId) }).exec().then((eventRegis
 
 /**
  * Update Ship
- * 
+ *
  */
 app.put('/ships/:shipId', async (req,res) =>{
 
@@ -149,7 +149,7 @@ Ship.findOneAndUpdate({ shipId: parseInt(req.params.shipId) }, newShip).exec().t
 }).catch((error) =>{
     return res.status(500).send({ message: "Error updating ship with shipId " + req.params.shipId });
 });
-    
+
 });
 /**
  * DELETE SHIP
@@ -160,7 +160,7 @@ app.delete('/ships/:shipId', async (req,res) =>{
         if (!ship){
             return res.status(404).send({ message: "Ship not found with shipId " + req.params.shipId });
         }
-    
+
         return res.status(202).json(ship);
     }).catch((error) =>{
         return res.status(500).send({ message: "Error updating ship with shipId " + req.params.shipId });
