@@ -31,7 +31,7 @@ import { AnyObject, Collection } from 'mongoose';
 
   });
 });
- 
+
 // GET USER BY USERNAME
 app.get('/users/:uid', (req,res) => {
 
@@ -97,7 +97,7 @@ User.findOne({ emailUsername: username }).exec().then((user) => {
     user.role = "user";
     user.save();
     const token = jwt.sign({ id: user.emailUsername, role: "user" }, secret, { expiresIn: 86400 });
-    
+
     res.status(201).send({ auth: true, token });
 }).catch((error) =>{
   return res.status(500).send({ message: error.message || "Some error occurred while retriving users" });

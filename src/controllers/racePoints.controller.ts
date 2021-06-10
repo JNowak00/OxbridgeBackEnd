@@ -21,25 +21,25 @@ import {RacePoint} from '../models/racePoint';
 
 
 
- 
+
 app.post('/racepoints/createRoute/:eventId', async (req,res) =>{
 
     RacePoint.deleteMany({ eventId: parseInt(req.params.eventId)}).exec().then((result) =>{
 
         const racePoints = req.body;
-            if (Array.isArray(racePoints)) 
+            if (Array.isArray(racePoints))
             {
                 RacePoint.findOne({}).sort('-racePointId').exec().then((lastRacePoint) =>{
                     let racepointId = 0;
-    
+
                     if (lastRacePoint)
                         racepointId = lastRacePoint.racePointId;
                     else
                         racepointId = 1;
-    
+
                     racePoints.forEach(racePoint => {
 
-                        let racepoint = new RacePoint(racePoint);
+                        const racepoint = new RacePoint(racePoint);
                         racepointId = racepointId + 1;
                         racepoint.racePointId = racepointId;
                         racepoint.save();
@@ -48,7 +48,7 @@ app.post('/racepoints/createRoute/:eventId', async (req,res) =>{
                  }).catch((error) =>{
                          return res.status(500).send({ message: error.message || "Some error occurred while retriving bikeRacks" });
                      })
-                return res.status(201).json(racePoints);     
+                return res.status(201).json(racePoints);
             }else
                         return res.status(400).send();
     }).catch((error)=>{
@@ -67,7 +67,7 @@ app.get('/racepoints/fromEventId/:eventId', async (req,res) =>{
         return res.status(500).send({ message: error.message || "Some error occurred while retriving racepoints" });
 
     })
- 
+
 });
 
 app.get('/racePoints/findStartAndFinish/:eventId', async (req,res) =>{
