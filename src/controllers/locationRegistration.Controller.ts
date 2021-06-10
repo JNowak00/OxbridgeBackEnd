@@ -37,9 +37,32 @@ import {Ship, IShip} from '../models/ship'
       
  });
  exports.createLocationRegistration = (newLocationRegistration: any, res: any, callback: any) => {
- 
 
-}
+
+    newLocationRegistration.locationTime.setHours(newLocationRegistration.locationTime.getHours()+2); 
+    CheckRacePoint(newLocationRegistration, res, function (updatedRegistration: any) {
+        if (updatedRegistration) {
+            newLocationRegistration = updatedRegistration
+
+
+            LocationReg.findOne({}).sort('-regId').exec().then((lastRegistration)=>{
+                if (lastRegistration)
+                    newLocationRegistration.regId = lastRegistration.regId + 1;
+                else
+                    newLocationRegistration.regId = 1;
+
+                newLocationRegistration.save();
+                       
+                    return callback(null, newLocationRegistration);
+                }).catch((error)=>{
+                    return callback(res.status(500).send({ message: error.message || "Some error occurred while retriving locationRegistrations" }));
+                    
+                });
+        
+        }
+    });
+};
+
 
 
 function CheckRacePoint(registration: any, res: any, callback: any) {
@@ -136,7 +159,7 @@ function CheckRacePoint(registration: any, res: any, callback: any) {
         return callback(res.status(500).send({ message: error.message || "Some error occurred while retriving eventRegistrations" }));
     })
 }
-
+ 
 function FindDistance(registration: any, racePoint: any, callback: any) {
     const checkPoint1 = { longtitude: Number,
         latitude: Number};
