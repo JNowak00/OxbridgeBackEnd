@@ -30,18 +30,18 @@ import {Event} from '../models/event'
       module.exports.CreateRegistration(reg,res, function(error: any, reg : IEventReg){
          if(error){
             return error;
-            
+
          }
          return res.status(201).json(reg);
       }
          );
-      });    
+      });
  exports.CreateRegistration = (newRegistration: IEventReg,res:  any, callback: any) =>{
 
       EventReg.findOne({}).sort('-eventRegId').exec().then((_lastEventRegistration) =>{
          if(_lastEventRegistration)
          newRegistration.eventRegId = _lastEventRegistration.eventRegId+1;
-         
+
          else{
             newRegistration.eventRegId = 1;
 
@@ -52,9 +52,9 @@ import {Event} from '../models/event'
       }).catch((error) =>{
             if(error){
                return callback(res.send(error));
-               
+
             }
-            
+
       });
 
     }
@@ -73,12 +73,12 @@ app.get('/eventRegistrations/', async (req,res) =>{
 })
 /**
  * Get Participants from Event using EventId
- * 
+ *
  */
 let pending = 0;
 app.get('/eventRegistrations/getParticipants/:eventId', async (req,res) =>{
 
-   let participants: any = [{}];
+   const participants: any = [{}];
    EventReg.find({eventId: parseInt(req.params.eventId)}).exec().then((eventRegs) =>{
       if(!eventRegs||eventRegs.length ===0)
          return res.status(404).send("NO PARTICIPANT FOUND")
@@ -86,7 +86,7 @@ app.get('/eventRegistrations/getParticipants/:eventId', async (req,res) =>{
             eventRegs.forEach(eventRegistration =>{
                pending++;
                Ship.findOne({shipId: eventRegistration.shipId}).exec().then((ship) =>{
-                  if(!ship){     
+                  if(!ship){
                    return res.status(404).send('Ship Not Found');
 }
                   else if(ship){
@@ -178,7 +178,7 @@ app.post('/eventRegistrations/signUp', async (req,res) =>{
             registration.eventId = _event.eventId;
             module.exports.CreateRegistration(registration,res)
                return res.status(201).json(registration)
-               }    
+               }
 
       }).catch((error) =>{
 
@@ -195,7 +195,7 @@ app.post('/eventRegistrations/signUp', async (req,res) =>{
 
 /**
  * Add PARTICIPANT TO EVENT/CREATE ONE PARTICIPANT
- * 
+ *
  */
 app.post('/eventRegistrations/addParticipant', async (req,res) =>{
 
@@ -232,8 +232,8 @@ if(!ship){
            "eventId": req.body.eventId,
             "shipId": newShip.shipId,
             "trackColor": "Yellow",
-            "teamName": req.body.teamName}); 
-            module.exports.CreateRegistration(newEventRegistration,res)       
+            "teamName": req.body.teamName});
+            module.exports.CreateRegistration(newEventRegistration,res)
 
    }).catch((error) =>{
 
@@ -249,8 +249,8 @@ else{
         "eventId": req.body.eventId,
          "shipId": ship.shipId,
          "trackColor": "Yellow",
-         "teamName": req.body.teamName}); 
-         module.exports.CreateRegistration(newEventRegistration,res)  
+         "teamName": req.body.teamName});
+         module.exports.CreateRegistration(newEventRegistration,res)
 
 }
 
@@ -272,7 +272,7 @@ else{
 
 
 });
-//Update User with EventRegId
+// Update User with EventRegId
 app.put('/eventRegistrations/updateParticipant/:eventRegId', async (req,res) =>{
 
  EventReg.findOneAndUpdate({eventRegId: parseInt(req.params.eventRegId)}, req.body).exec().then((eventReg)=>{
