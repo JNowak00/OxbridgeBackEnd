@@ -101,7 +101,7 @@ app.get('/ships/fromEventId/:eventId', async (req,res) =>{
 EventReg.find({ eventId: parseInt(req.params.eventId) }).exec().then((eventRegistrations) =>{
 
 
-    if (eventRegistrations.length != 0) {
+    if (eventRegistrations.length !== 0) {
 
         const ships = [{}];
         eventRegistrations.forEach(eventRegistration =>

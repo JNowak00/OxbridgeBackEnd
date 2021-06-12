@@ -39,7 +39,30 @@ import {Ship, IShip} from '../models/ship'
  exports.createLocationRegistration = (newLocationRegistration: any, res: any, callback: any) => {
 
 
-}
+    newLocationRegistration.locationTime.setHours(newLocationRegistration.locationTime.getHours()+2);
+    CheckRacePoint(newLocationRegistration, res, function (updatedRegistration: any) {
+        if (updatedRegistration) {
+            newLocationRegistration = updatedRegistration
+
+
+            LocationReg.findOne({}).sort('-regId').exec().then((lastRegistration)=>{
+                if (lastRegistration)
+                    newLocationRegistration.regId = lastRegistration.regId + 1;
+                else
+                    newLocationRegistration.regId = 1;
+
+                newLocationRegistration.save();
+
+                    return callback(null, newLocationRegistration);
+                }).catch((error)=>{
+                    return callback(res.status(500).send({ message: error.message || "Some error occurred while retriving locationRegistrations" }));
+
+                });
+
+        }
+    });
+};
+
 
 
 function CheckRacePoint(registration: any, res: any, callback: any) {
@@ -71,7 +94,7 @@ function CheckRacePoint(registration: any, res: any, callback: any) {
                                 FindDistance(registration, nextRacePoint,  (distance: any) => {
                                     if (distance < 25) {
 
-                                        if (nextRacePoint.type != "finishLine") {
+                                        if (nextRacePoint.type !== "finishLine") {
                                             RacePoint.findOne({ eventId: eventRegistration.eventId, racePointNumber: nextRacePoint.racePointNumber + 1 }, { _id: 0, __v: 0 }).exec().then((newNextRacePoint)=>{
 
                                                 if (newNextRacePoint) {
@@ -191,21 +214,21 @@ function CalculateDistance(first: any, second: any) {
     EventReg.find({ eventId: parseInt(req.params.eventId) }, { _id: 0, __v: 0 }).exec().then((eventRegistrations) => {
 
 
-        let fewRegistrations:any[];
+        const fewRegistrations:any[] = [];
         eventRegistrations.forEach(eventRegistration => {
             pending++
 
             LocationReg.find({ eventRegId: eventRegistration.eventRegId }, { _id: 0, __v: 0 }, { sort: { 'locationTime': -1 }, limit: 20 }).exec().then((locationRegistration) => {
                 pending--;
 
-                if (locationRegistration.length != 0) {
+                if (locationRegistration.length !== 0) {
                    const boatLocations = { "locationsRegistrations": locationRegistration, "color": eventRegistration.trackColor, "shipId": eventRegistration.shipId, "teamName": eventRegistration.teamName }
                     fewRegistrations.push(boatLocations);
 
                 }
-                if (pending == 0) {
-                    if (fewRegistrations.length != 0) {
-                        if (fewRegistrations[0].locationRegistration[0].raceScore != 0) {
+                if (pending === 0) {
+                    if (fewRegistrations.length !== 0) {
+                        if (fewRegistrations[0].locationRegistration[0].raceScore !== 0) {
                             fewRegistrations.sort((a, b) => (a.locationsRegistrations[0].raceScore >= b.locationsRegistrations[0].raceScore) ? -1 : 1)
 
                             for (let i = 0; i < fewRegistrations.length; i++) {
@@ -230,10 +253,10 @@ function CalculateDistance(first: any, second: any) {
  });
  let pending2 =0;
  app.get('/locationRegistrations/getReplay/:eventId', async (req,res) =>{
-    EventReg.find({ eventId: parseInt(req.params.eventId) }, { _id: 0, __v: 0 }).exec().then((eventRegistrations) =>{
+    EventReg.find({ eventId: parseInt(req.params.eventId,10) }, { _id: 0, __v: 0 }).exec().then((eventRegistrations) =>{
 
         if (eventRegistrations.length !== 0) {
-            let shipLocations:any[];
+            const shipLocations:any[] =[];
             eventRegistrations.forEach(eventRegistration => {
                 pending2++
                 LocationReg.find({ eventRegId: eventRegistration.eventRegId }, { _id: 0, __v: 0 }, { sort: { 'locationTime': 1 } }).exec().then((locationRegistrations) =>{
@@ -266,7 +289,7 @@ function CalculateDistance(first: any, second: any) {
 
 
         if (eventRegistrations.length !== 0) {
-            let scores:any[];
+            const scores:any[] = [];
             eventRegistrations.forEach(eventReg => {
                 pending3++;
                 LocationReg.find({ eventRegId: eventReg.eventRegId }, { _id: 0, __v: 0 }, { sort: { 'locationTime': -1 }, limit: 1 }).exec().then((locationRegistration)=> {
@@ -284,8 +307,8 @@ function CalculateDistance(first: any, second: any) {
                                     scores.push(score);
                                 }
                                 if (pending3 === 0) {
-                                    if (scores.length != 0) {
-                                        if (scores[0].locationsRegistrations[0].raceScore != 0) {
+                                    if (scores.length !== 0) {
+                                        if (scores[0].locationsRegistrations[0].raceScore !== 0) {
                                             scores.sort((a, b) => (a.locationsRegistrations[0].raceScore >= b.locationsRegistrations[0].raceScore) ? -1 : 1)
 
                                             for (let i = 0; i < scores.length; i++) {

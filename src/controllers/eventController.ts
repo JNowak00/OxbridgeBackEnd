@@ -50,11 +50,11 @@ app.post('/events', async (req,res) =>{
 
 //  export function hasRoute(){
       app.get('/events/hasRoute/:eventId', async (req,res) =>{
-        const eveID = parseInt(req.params.eventId);
+        const eveID = parseInt(req.params.eventId, 10);
 
 
         RacePoint.find({eventId: eveID}).exec().then((racePoints) =>{
-            if(racePoints&&racePoints.length != 0)
+            if(racePoints&&racePoints.length !== 0)
                 return res.status(200).send(true);
             else
                return res.status(200).send(false);
@@ -92,12 +92,12 @@ ships.forEach(ship =>{
         if(eventRegistrations){
             eventRegistrations.forEach(eventRegistration =>{
                 pending++;
-                Ship.findOne({shipId: eventRegistration.shipId}).exec().then((ship) =>{
-                    if(ship){
+                Ship.findOne({shipId: eventRegistration.shipId}).exec().then((_ship) =>{
+                    if(_ship){
                         Event.findOne({eventId: eventRegistration.eventId}).exec().then((_event) =>{
                             if(_event)
-                                events.push({"eventId": _event.eventId, "name": _event.name, "eventStart": _event.eventStart, "eventEnd": _event.eventEnd, "city": _event.city, "eventRegId": eventRegistration.eventRegId, "shipName": ship.name, "teamName": eventRegistration.teamName, "isLive ": _event.isLive, "actualEventStart": _event.actualEventStart })
-                            if(pending == 0){
+                                events.push({"eventId": _event.eventId, "name": _event.name, "eventStart": _event.eventStart, "eventEnd": _event.eventEnd, "city": _event.city, "eventRegId": eventRegistration.eventRegId, "shipName": _ship.name, "teamName": eventRegistration.teamName, "isLive ": _event.isLive, "actualEventStart": _event.actualEventStart })
+                            if(pending === 0){
                                 return res.status(200).send(events);
                             }
                             }).catch((error) =>{
@@ -130,7 +130,7 @@ else{
 // Find single event with the given eventID
 
 app.get('/events/:eventId', async (req,res) =>{
-Event.findOne({eventId: parseInt(req.params.eventId)}).exec().then((foundEvent) =>{
+Event.findOne({eventId: parseInt(req.params.eventId, 10)}).exec().then((foundEvent) =>{
 
     if(!foundEvent){
         return res.status(404).send("EVENT NOT FOUND");
@@ -149,7 +149,7 @@ Event.findOne({eventId: parseInt(req.params.eventId)}).exec().then((foundEvent) 
 app.put('events/:eventId', async (req,res) =>{
     const newEvent = req.body;
     newEvent.eventId = req.params.eventId;
-    Event.updateOne({eventId: parseInt(req.params.eventId)}, newEvent).exec().then((_Event) =>{
+    Event.updateOne({eventId: parseInt(req.params.eventId, 10)}, newEvent).exec().then((_Event) =>{
         if(!_Event){
             return res.status(404).send({message: "BikeRackStation not found with stationId "+req.params.eventId})
         }
@@ -167,7 +167,7 @@ app.put('events/:eventId', async (req,res) =>{
 app.put('events/startEvent/:eventId', async (req,res) =>{
 
     const updatedEvent = {isLive: true, actualEventStart: req.body.actualEventStart}
-    Event.findOneAndUpdate({eventId: parseInt(req.params.eventId)}, updatedEvent, {new:true}).exec().then((_event) =>{
+    Event.findOneAndUpdate({eventId: parseInt(req.params.eventId, 10)}, updatedEvent, {new:true}).exec().then((_event) =>{
         if(!_event){
         return res.status(404).send({message: "Event not found with this ID"+ req.params.eventId})
         }
@@ -180,7 +180,7 @@ app.put('events/startEvent/:eventId', async (req,res) =>{
 // Stop Event update PRoperty
 app.put('events/stopEvent/:eventId', async (req,res) =>{
 
-    Event.findOneAndUpdate({eventId: parseInt(req.params.eventId)},{isLive:false}, {new:true}).exec().then((_event) =>{
+    Event.findOneAndUpdate({eventId: parseInt(req.params.eventId, 10)},{isLive:false}, {new:true}).exec().then((_event) =>{
         if(!_event){
         return res.status(404).send({message: "Event not found with this ID"+ req.params.eventId})
         }
@@ -193,13 +193,13 @@ app.put('events/stopEvent/:eventId', async (req,res) =>{
 // Deleting Event
 app.delete('events/:eventId', async (req,res) =>{
 
-    Event.findOneAndDelete({eventId: parseInt(req.params.eventId)}).exec().then((_event) =>{
+    Event.findOneAndDelete({eventId: parseInt(req.params.eventId, 10)}).exec().then((_event) =>{
         if(!_event){
                 return res.status(404).send({message: "Event Not found with this ID: "+req.params.eventId })
 
         }
-        EventReg.deleteMany({eventId: parseInt(req.params.eventId)}).exec().then((_eventRegs) =>{
-                RacePoint.deleteMany({eventId: parseInt(req.params.eventId)}).exec().then((_racePoints) =>{
+        EventReg.deleteMany({eventId: parseInt(req.params.eventId, 10)}).exec().then((_eventRegs) =>{
+                RacePoint.deleteMany({eventId: parseInt(req.params.eventId, 10)}).exec().then((_racePoints) =>{
                     return res.status(202).json(_event);
 
                 }).catch((error) =>{
