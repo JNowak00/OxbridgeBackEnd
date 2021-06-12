@@ -27,29 +27,17 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.app = void 0;
-const express_1 = __importDefault(require("express"));
-const cors_1 = __importDefault(require("cors"));
-const bodyParser = __importStar(require("body-parser"));
 const dotenv = __importStar(require("dotenv"));
 const user_1 = require("../models/user");
-const DB_1 = require("../Sessions/DB");
 const bcrypt = __importStar(require("bcrypt"));
 const jwt = __importStar(require("jsonwebtoken"));
+const express_1 = require("express");
 dotenv.config({ path: 'config/week10.env' });
-const app = express_1.default();
-exports.app = app;
+const UserRouter = express_1.Router();
 const secret = 'secret';
-app.use(cors_1.default());
-app.use(express_1.default.static('public'));
-app.use(bodyParser.json());
-DB_1.DB.connect();
 // GetAllUsers
-app.get('/users', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+UserRouter.get('/users', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     user_1.User.find().exec().then((results) => {
         return res.status(200).json(results);
     }).catch((error) => {
@@ -60,7 +48,7 @@ app.get('/users', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     });
 }));
 // GET USER BY USERNAME
-app.get('/users/:uid', (req, res) => {
+UserRouter.get('/users/:uid', (req, res) => {
     user_1.User.findOne({ emailUsername: req.params.uid }).exec().then((result) => {
         return res.status(200).json(result);
     }).catch((error) => {
@@ -71,7 +59,7 @@ app.get('/users/:uid', (req, res) => {
     });
 });
 // LOGIN API
-app.post('/users/login', (req, res) => {
+UserRouter.post('/users/login', (req, res) => {
     console.log("userTryingtologin");
     const username = req.body.emailUsername;
     const passw = req.body.password;
@@ -103,7 +91,7 @@ app.post('/users/login', (req, res) => {
     });
 });
 // REGISTER USER
-app.post('/users/register', (req, res) => {
+UserRouter.post('/users/register', (req, res) => {
     const username = req.body.emailUsername;
     user_1.User.findOne({ emailUsername: username }).exec().then((user) => {
         if (user)
@@ -124,7 +112,7 @@ app.post('/users/register', (req, res) => {
  * TODO:
  * ADDING AUTHENTICATION + CHECKING ROLE OF ACTUAL USER.
  */
-app.post('/users/registerAdmin', (req, res) => {
+UserRouter.post('/users/registerAdmin', (req, res) => {
     const username = req.body.emailUsername;
     user_1.User.findOne({ emailUsername: username }).exec().then((user) => {
         if (!user)
@@ -141,7 +129,7 @@ app.post('/users/registerAdmin', (req, res) => {
     });
 });
 // DELETE USER
-app.delete('/users/:uid', (req, res) => {
+UserRouter.delete('/users/:uid', (req, res) => {
     const username = req.params.uid;
     user_1.User.findOneAndDelete({ emailUsername: username }).exec().then((result) => {
         if (!result) {
@@ -153,7 +141,7 @@ app.delete('/users/:uid', (req, res) => {
     });
 });
 // Update Existing User
-app.put('/users/:uid', (req, res) => {
+UserRouter.put('/users/:uid', (req, res) => {
     const username = req.params.uid;
     const hashedPassword = bcrypt.hashSync(req.body.password, 10);
     const Firstname = req.body.firstname;
@@ -175,4 +163,5 @@ app.put('/users/:uid', (req, res) => {
         return res.status(500).send({ message: error.message || "Internal Server Error" });
     });
 });
+exports.default = UserRouter;
 //# sourceMappingURL=user.controller.js.map

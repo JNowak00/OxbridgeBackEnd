@@ -8,21 +8,19 @@ import * as bcrypt from 'bcrypt'
 import * as jwt from 'jsonwebtoken'
 import { AnyObject, Collection } from 'mongoose';
 import {RacePoint} from '../models/racePoint';
+import {Router} from 'express'
 
+const racePointsRouter = Router();
 
 
  dotenv.config({ path: 'config/week10.env' });
- const app = express();
+
  const secret = 'secret';
- app.use(cors());
- app.use(express.static('public'));
- app.use(bodyParser.json());
- DB.connect();
 
 
 
 
-app.post('/racepoints/createRoute/:eventId', async (req,res) =>{
+ racePointsRouter.post('/racepoints/createRoute/:eventId', async (req,res) =>{
 
     RacePoint.deleteMany({ eventId: parseInt(req.params.eventId)}).exec().then((result) =>{
 
@@ -58,7 +56,7 @@ app.post('/racepoints/createRoute/:eventId', async (req,res) =>{
 });
 
 
-app.get('/racepoints/fromEventId/:eventId', async (req,res) =>{
+racePointsRouter.get('/racepoints/fromEventId/:eventId', async (req,res) =>{
 
     RacePoint.find({ eventId: parseInt(req.params.eventId) }, { _id: 0, __v: 0 }, { sort: { racePointNumber: 1 } }).exec().then((racePoints) =>{
 
@@ -70,7 +68,7 @@ app.get('/racepoints/fromEventId/:eventId', async (req,res) =>{
 
 });
 
-app.get('/racePoints/findStartAndFinish/:eventId', async (req,res) =>{
+racePointsRouter.get('/racePoints/findStartAndFinish/:eventId', async (req,res) =>{
 
     RacePoint.find({ eventId: parseInt(req.params.eventId), $or: [{ type: 'startLine' }, { type: 'finishLine' }]}, { _id: 0, __v: 0 }).exec().then((racePoints) =>{
         res.status(200).json(racePoints);
@@ -78,3 +76,4 @@ app.get('/racePoints/findStartAndFinish/:eventId', async (req,res) =>{
         return res.status(500).send({ message: error.message || "Some error occurred while retriving racepoints" });
     })
 });
+export default racePointsRouter;

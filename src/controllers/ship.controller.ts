@@ -9,21 +9,20 @@ import * as jwt from 'jsonwebtoken'
 import { AnyObject, Collection } from 'mongoose';
 import { Ship } from '../models/ship';
 import { EventReg } from '../models/eventRegistration';
+import {Router} from 'express'
 
+const shipRouter = Router();
 
 
  dotenv.config({ path: 'config/week10.env' });
- const app = express();
+
  const secret = 'secret';
- app.use(cors());
- app.use(express.static('public'));
- app.use(bodyParser.json());
- DB.connect();
+
 
  /**
   * Crerating Ship
   */
- app.post('/ships', async (req,res) =>{
+  shipRouter.post('/ships', async (req,res) =>{
 
         const ship = new Ship(req.body);
         Ship.findOne({}).sort('-shipId').exec().then((lastShip) =>{
@@ -44,7 +43,7 @@ import { EventReg } from '../models/eventRegistration';
  /**
   * Get User Ships
   */
- app.get('/ships/myShips/fromUsername', async (req,res) =>{
+  shipRouter.get('/ships/myShips/fromUsername', async (req,res) =>{
 
     Ship.find({emailUsername: req.body.emailUsername}).exec().then((ships) =>{
 
@@ -59,7 +58,7 @@ import { EventReg } from '../models/eventRegistration';
  * Get all ships
  *
  */
- app.get('/ships', async (req,res) =>{
+ shipRouter.get('/ships', async (req,res) =>{
 
     Ship.find({}).exec().then((ships) =>{
         res.status(200).json(ships);
@@ -76,7 +75,7 @@ import { EventReg } from '../models/eventRegistration';
   * Get Single ship
   *
   */
- app.get('/ships/:shipId', async (req,res) =>{
+  shipRouter.get('/ships/:shipId', async (req,res) =>{
 
     Ship.find({shipId: parseInt(req.params.shipId)}).exec().then((ship) =>{
         if(!ship){
@@ -96,7 +95,7 @@ import { EventReg } from '../models/eventRegistration';
  * Get all ships participating in the given event
  */
  let pending = 0;
-app.get('/ships/fromEventId/:eventId', async (req,res) =>{
+ shipRouter.get('/ships/fromEventId/:eventId', async (req,res) =>{
 
 EventReg.find({ eventId: parseInt(req.params.eventId) }).exec().then((eventRegistrations) =>{
 
@@ -137,7 +136,7 @@ EventReg.find({ eventId: parseInt(req.params.eventId) }).exec().then((eventRegis
  * Update Ship
  *
  */
-app.put('/ships/:shipId', async (req,res) =>{
+ shipRouter.put('/ships/:shipId', async (req,res) =>{
 
 const newShip = new Ship(req.body);
 Ship.findOneAndUpdate({ shipId: parseInt(req.params.shipId) }, newShip).exec().then((ship) =>{
@@ -154,7 +153,7 @@ Ship.findOneAndUpdate({ shipId: parseInt(req.params.shipId) }, newShip).exec().t
 /**
  * DELETE SHIP
  */
-app.delete('/ships/:shipId', async (req,res) =>{
+ shipRouter.delete('/ships/:shipId', async (req,res) =>{
 
     Ship.findOneAndDelete({ shipId: parseInt(req.params.shipId) }).exec().then((ship) =>{
         if (!ship){
@@ -167,3 +166,4 @@ app.delete('/ships/:shipId', async (req,res) =>{
     });
 
 })
+export default shipRouter;

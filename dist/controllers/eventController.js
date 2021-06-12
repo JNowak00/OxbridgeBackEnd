@@ -27,28 +27,18 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-const express_1 = __importDefault(require("express"));
-const cors_1 = __importDefault(require("cors"));
-const bodyParser = __importStar(require("body-parser"));
 const dotenv = __importStar(require("dotenv"));
 const event_1 = require("../models/event");
 const racePoint_1 = require("../models/racePoint");
 const ship_1 = require("../models/ship");
-const DB_1 = require("../Sessions/DB");
 const eventRegistration_1 = require("../models/eventRegistration");
+const express_1 = require("express");
+const eventRouter = express_1.Router();
 dotenv.config({ path: 'config/week10.env' });
-const app = express_1.default();
 const secret = 'secret';
-app.use(cors_1.default());
-app.use(express_1.default.static('public'));
-app.use(bodyParser.json());
-DB_1.DB.connect();
 // Create Events
-app.post('/events', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+eventRouter.post('/events', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     // Checking if authorized
     /* Auth.Authorize(req, res, "admin", function (err) {
          if (err)
@@ -70,7 +60,7 @@ app.post('/events', (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     });
 }));
 //  export function hasRoute(){
-app.get('/events/hasRoute/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+eventRouter.get('/events/hasRoute/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const eveID = parseInt(req.params.eventId, 10);
     racePoint_1.RacePoint.find({ eventId: eveID }).exec().then((racePoints) => {
         if (racePoints && racePoints.length !== 0)
@@ -82,7 +72,7 @@ app.get('/events/hasRoute/:eventId', (req, res) => __awaiter(void 0, void 0, voi
     });
 }));
 // Get all events
-app.get('/events', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+eventRouter.get('/events', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     event_1.Event.find({}).exec().then((events) => {
         return res.status(200).json(events);
     }).catch((error) => {
@@ -91,7 +81,7 @@ app.get('/events', (req, res) => __awaiter(void 0, void 0, void 0, function* () 
 }));
 let pending = 0;
 // Retrive events with ships from username
-app.get('/events/myEvents/findFromUsername', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+eventRouter.get('/events/myEvents/findFromUsername', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const events = [{}];
     ship_1.Ship.find({ emailUsername: req.body.emailUsername }).exec().then((ships) => {
         if (ships.length > 0) {
@@ -132,7 +122,7 @@ app.get('/events/myEvents/findFromUsername', (req, res) => __awaiter(void 0, voi
     });
 }));
 // Find single event with the given eventID
-app.get('/events/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+eventRouter.get('/events/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     event_1.Event.findOne({ eventId: parseInt(req.params.eventId, 10) }).exec().then((foundEvent) => {
         if (!foundEvent) {
             return res.status(404).send("EVENT NOT FOUND");
@@ -143,7 +133,7 @@ app.get('/events/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, func
     });
 }));
 // Updating Event Using eventID
-app.put('events/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+eventRouter.put('events/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const newEvent = req.body;
     newEvent.eventId = req.params.eventId;
     event_1.Event.updateOne({ eventId: parseInt(req.params.eventId, 10) }, newEvent).exec().then((_Event) => {
@@ -156,7 +146,7 @@ app.put('events/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, funct
     });
 }));
 // Updating event property "isLive" to true
-app.put('events/startEvent/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+eventRouter.put('events/startEvent/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const updatedEvent = { isLive: true, actualEventStart: req.body.actualEventStart };
     event_1.Event.findOneAndUpdate({ eventId: parseInt(req.params.eventId, 10) }, updatedEvent, { new: true }).exec().then((_event) => {
         if (!_event) {
@@ -168,7 +158,7 @@ app.put('events/startEvent/:eventId', (req, res) => __awaiter(void 0, void 0, vo
     });
 }));
 // Stop Event update PRoperty
-app.put('events/stopEvent/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+eventRouter.put('events/stopEvent/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     event_1.Event.findOneAndUpdate({ eventId: parseInt(req.params.eventId, 10) }, { isLive: false }, { new: true }).exec().then((_event) => {
         if (!_event) {
             return res.status(404).send({ message: "Event not found with this ID" + req.params.eventId });
@@ -179,7 +169,7 @@ app.put('events/stopEvent/:eventId', (req, res) => __awaiter(void 0, void 0, voi
     });
 }));
 // Deleting Event
-app.delete('events/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+eventRouter.delete('events/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     event_1.Event.findOneAndDelete({ eventId: parseInt(req.params.eventId, 10) }).exec().then((_event) => {
         if (!_event) {
             return res.status(404).send({ message: "Event Not found with this ID: " + req.params.eventId });
@@ -197,4 +187,5 @@ app.delete('events/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, fu
         return res.status(500).send({ message: "Error deleting event with eventId " + req.params.eventId });
     });
 }));
+exports.default = eventRouter;
 //# sourceMappingURL=eventController.js.map

@@ -27,28 +27,18 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-const express_1 = __importDefault(require("express"));
-const cors_1 = __importDefault(require("cors"));
-const bodyParser = __importStar(require("body-parser"));
 const dotenv = __importStar(require("dotenv"));
 const eventRegistration_1 = require("../models/eventRegistration");
-const DB_1 = require("../Sessions/DB");
 const bcrypt = __importStar(require("bcrypt"));
 const ship_1 = require("../models/ship");
 const user_1 = require("../models/user");
 const event_1 = require("../models/event");
+const express_1 = require("express");
 dotenv.config({ path: 'config/week10.env' });
-const app = express_1.default();
+const eventRegRouter = express_1.Router();
 const secret = 'secret';
-app.use(cors_1.default());
-app.use(express_1.default.static('public'));
-app.use(bodyParser.json());
-DB_1.DB.connect();
-app.post('/eventRegistrations/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+eventRegRouter.route('/eventRegistrations/').post((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const reg = new eventRegistration_1.EventReg(req.body);
     module.exports.CreateRegistration(reg, res);
     return res.status(201).json(reg);
@@ -71,7 +61,7 @@ exports.CreateRegistration = (newRegistration, res, callback) => {
 /**
  * Get all events
  */
-app.get('/eventRegistrations/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+eventRegRouter.get('/eventRegistrations/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     eventRegistration_1.EventReg.find({}).exec().then((_eventRegs) => {
         return res.status(200).json(_eventRegs);
     }).catch((error) => {
@@ -83,7 +73,7 @@ app.get('/eventRegistrations/', (req, res) => __awaiter(void 0, void 0, void 0, 
  *
  */
 let pending = 0;
-app.get('/eventRegistrations/getParticipants/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+eventRegRouter.get('/eventRegistrations/getParticipants/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const participants = [{}];
     const eventID = parseInt(req.params.eventId, 10);
     eventRegistration_1.EventReg.find({ eventId: eventID }).exec().then((eventRegs) => {
@@ -133,7 +123,7 @@ app.get('/eventRegistrations/getParticipants/:eventId', (req, res) => __awaiter(
  * fIND EVENT FROM USERNAME
  * @param eventId
  */
-app.get('/eventRegistrations/findEventRegFromUsername/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+eventRegRouter.get('/eventRegistrations/findEventRegFromUsername/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     let pending2 = 0;
     ship_1.Ship.find({ emailUsername: req.body.emailUsername }).exec().then((ships) => {
         ships.forEach(ship => {
@@ -155,7 +145,7 @@ app.get('/eventRegistrations/findEventRegFromUsername/:eventId', (req, res) => _
 /**\
  * SING UP TO THE EVENT
  */
-app.post('/eventRegistrations/signUp', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+eventRegRouter.post('/eventRegistrations/signUp', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     event_1.Event.findOne({ eventCode: req.body.eventCode }).exec().then((_event) => {
         if (!_event) {
             return res.status(404).send("Event Not Found/Wrong eventCode");
@@ -183,7 +173,7 @@ app.post('/eventRegistrations/signUp', (req, res) => __awaiter(void 0, void 0, v
  * Add PARTICIPANT TO EVENT/CREATE ONE PARTICIPANT
  *
  */
-app.post('/eventRegistrations/addParticipant', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+eventRegRouter.post('/eventRegistrations/addParticipant', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     user_1.User.findOne({ emailUsername: req.body.emailUsername }).exec().then((user) => {
         if (!user) {
             const hashedPassword = bcrypt.hashSync("1234", 10);
@@ -238,7 +228,7 @@ app.post('/eventRegistrations/addParticipant', (req, res) => __awaiter(void 0, v
     });
 }));
 // Update User with EventRegId
-app.put('/eventRegistrations/updateParticipant/:eventRegId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+eventRegRouter.put('/eventRegistrations/updateParticipant/:eventRegId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const eventID = parseInt(req.params.eventRegId, 10);
     eventRegistration_1.EventReg.findOneAndUpdate({ eventRegId: eventID }, req.body).exec().then((eventReg) => {
         if (eventReg) {
@@ -269,7 +259,7 @@ app.put('/eventRegistrations/updateParticipant/:eventRegId', (req, res) => __awa
         return res.status(500).send({ message: "Error Updating eventRegistration with eventRegId: " + req.params.eventRegId });
     });
 }));
-app.delete('/eventRegistrations/:eventRegId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+eventRegRouter.delete('/eventRegistrations/:eventRegId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const eventRID = parseInt(req.params.eventRegId, 10);
     eventRegistration_1.EventReg.findOneAndDelete({ eventRegId: eventRID }).exec().then((eventRegistration) => {
         if (!eventRegistration) {
@@ -280,4 +270,5 @@ app.delete('/eventRegistrations/:eventRegId', (req, res) => __awaiter(void 0, vo
         return res.status(500).send({ message: "Error deleting eventRegistration with eventRegId: " + req.params.eventRegId });
     });
 }));
+exports.default = eventRegRouter;
 //# sourceMappingURL=event.RegController.js.map

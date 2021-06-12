@@ -12,21 +12,20 @@ import {LocationReg, ILocationReg} from '../models/locationRegistration';
 import {Event, IEvent } from '../models/event'
 import { EventReg } from '../models/eventRegistration';
 import {Ship, IShip} from '../models/ship'
+import {Router} from 'express'
 
+const locationRouter = Router();
 
 
  dotenv.config({ path: 'config/week10.env' });
- const app = express();
+
  const secret = 'secret';
- app.use(cors());
- app.use(express.static('public'));
- app.use(bodyParser.json());
- DB.connect();
 
 
 
 
- app.post('/locationRegistrations/', async (req,res) =>{
+
+ locationRouter.post('/locationRegistrations/', async (req,res) =>{
 
     const locationRegistration = new LocationReg(req.body);
     module.exports.createLocationRegistration(locationRegistration, res, (error: any, locationReg: any) =>{
@@ -210,7 +209,7 @@ function CalculateDistance(first: any, second: any) {
 
 
         let pending = 0;
- app.get('/locationRegistrations/getLive/:eventId', async (req,res) =>{
+locationRouter.get('/locationRegistrations/getLive/:eventId', async (req,res) =>{
     EventReg.find({ eventId: parseInt(req.params.eventId) }, { _id: 0, __v: 0 }).exec().then((eventRegistrations) => {
 
 
@@ -252,7 +251,7 @@ function CalculateDistance(first: any, second: any) {
 
  });
  let pending2 =0;
- app.get('/locationRegistrations/getReplay/:eventId', async (req,res) =>{
+ locationRouter.get('/locationRegistrations/getReplay/:eventId', async (req,res) =>{
     EventReg.find({ eventId: parseInt(req.params.eventId,10) }, { _id: 0, __v: 0 }).exec().then((eventRegistrations) =>{
 
         if (eventRegistrations.length !== 0) {
@@ -283,7 +282,7 @@ function CalculateDistance(first: any, second: any) {
 
  });
  let pending3 = 0;
- app.get('/locationRegistrations/getScoreboard/:eventId', async (req,res) =>{
+ locationRouter.get('/locationRegistrations/getScoreboard/:eventId', async (req,res) =>{
 
     EventReg.find({ eventId: parseInt(req.params.eventId) }, { _id: 0, __v: 0 }).exec().then((eventRegistrations) => {
 
@@ -344,7 +343,7 @@ function CalculateDistance(first: any, second: any) {
     })
 
  });
- app.delete('/locationRegistrations/deleteFromEventRegId/:eventId', async (req,res) =>{
+ locationRouter.delete('/locationRegistrations/deleteFromEventRegId/:eventId', async (req,res) =>{
 
     LocationReg.deleteMany({ eventRegId: parseInt(req.params.eventId) }).exec().then((locationRegistrations) => {
 
@@ -356,3 +355,5 @@ function CalculateDistance(first: any, second: any) {
         return res.status(500).send({ message: "Error deleting locationRegistrations with eventRegId " + req.params.eventId });
     });
  });
+
+ export default locationRouter;
