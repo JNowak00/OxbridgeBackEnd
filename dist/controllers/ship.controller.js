@@ -27,28 +27,18 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-const express_1 = __importDefault(require("express"));
-const cors_1 = __importDefault(require("cors"));
-const bodyParser = __importStar(require("body-parser"));
 const dotenv = __importStar(require("dotenv"));
-const DB_1 = require("../Sessions/DB");
 const ship_1 = require("../models/ship");
 const eventRegistration_1 = require("../models/eventRegistration");
+const express_1 = require("express");
+const shipRouter = express_1.Router();
 dotenv.config({ path: 'config/week10.env' });
-const app = express_1.default();
 const secret = 'secret';
-app.use(cors_1.default());
-app.use(express_1.default.static('public'));
-app.use(bodyParser.json());
-DB_1.DB.connect();
 /**
  * Crerating Ship
  */
-app.post('/ships', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+shipRouter.post('/ships', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const ship = new ship_1.Ship(req.body);
     ship_1.Ship.findOne({}).sort('-shipId').exec().then((lastShip) => {
         if (lastShip) {
@@ -66,7 +56,7 @@ app.post('/ships', (req, res) => __awaiter(void 0, void 0, void 0, function* () 
 /**
  * Get User Ships
  */
-app.get('/ships/myShips/fromUsername', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+shipRouter.get('/ships/myShips/fromUsername', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     ship_1.Ship.find({ emailUsername: req.body.emailUsername }).exec().then((ships) => {
         return res.status(200).send(ships);
     }).catch((error) => {
@@ -78,7 +68,7 @@ app.get('/ships/myShips/fromUsername', (req, res) => __awaiter(void 0, void 0, v
  * Get all ships
  *
  */
-app.get('/ships', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+shipRouter.get('/ships', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     ship_1.Ship.find({}).exec().then((ships) => {
         res.status(200).json(ships);
     }).catch((error) => {
@@ -90,7 +80,7 @@ app.get('/ships', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
  * Get Single ship
  *
  */
-app.get('/ships/:shipId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+shipRouter.get('/ships/:shipId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     ship_1.Ship.find({ shipId: parseInt(req.params.shipId) }).exec().then((ship) => {
         if (!ship) {
             return res.status(404).send({ message: "Ship with id " + req.params.shipId + " was not found" });
@@ -104,7 +94,7 @@ app.get('/ships/:shipId', (req, res) => __awaiter(void 0, void 0, void 0, functi
  * Get all ships participating in the given event
  */
 let pending = 0;
-app.get('/ships/fromEventId/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+shipRouter.get('/ships/fromEventId/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     eventRegistration_1.EventReg.find({ eventId: parseInt(req.params.eventId) }).exec().then((eventRegistrations) => {
         if (eventRegistrations.length !== 0) {
             const ships = [{}];
@@ -132,7 +122,7 @@ app.get('/ships/fromEventId/:eventId', (req, res) => __awaiter(void 0, void 0, v
  * Update Ship
  *
  */
-app.put('/ships/:shipId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+shipRouter.put('/ships/:shipId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const newShip = new ship_1.Ship(req.body);
     ship_1.Ship.findOneAndUpdate({ shipId: parseInt(req.params.shipId) }, newShip).exec().then((ship) => {
         if (!ship) {
@@ -146,7 +136,7 @@ app.put('/ships/:shipId', (req, res) => __awaiter(void 0, void 0, void 0, functi
 /**
  * DELETE SHIP
  */
-app.delete('/ships/:shipId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+shipRouter.delete('/ships/:shipId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     ship_1.Ship.findOneAndDelete({ shipId: parseInt(req.params.shipId) }).exec().then((ship) => {
         if (!ship) {
             return res.status(404).send({ message: "Ship not found with shipId " + req.params.shipId });
@@ -156,4 +146,5 @@ app.delete('/ships/:shipId', (req, res) => __awaiter(void 0, void 0, void 0, fun
         return res.status(500).send({ message: "Error updating ship with shipId " + req.params.shipId });
     });
 }));
+exports.default = shipRouter;
 //# sourceMappingURL=ship.controller.js.map

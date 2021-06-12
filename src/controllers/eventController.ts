@@ -10,19 +10,17 @@ import * as bcrypt from 'bcrypt'
 import * as jwt from 'jsonwebtoken'
 import { Collection } from 'mongoose';
 import { EventReg, IEventReg } from '../models/eventRegistration';
+import {Router} from 'express'
 
+const eventRouter = Router();
 
 
 dotenv.config({ path: 'config/week10.env' });
-const app = express();
 const secret = 'secret';
-app.use(cors());
-app.use(express.static('public'));
-app.use(bodyParser.json());
-DB.connect();
+
 
 // Create Events
-app.post('/events', async (req,res) =>{
+eventRouter.post('/events', async (req,res) =>{
 
     // Checking if authorized
    /* Auth.Authorize(req, res, "admin", function (err) {
@@ -49,7 +47,7 @@ app.post('/events', async (req,res) =>{
      });
 
 //  export function hasRoute(){
-      app.get('/events/hasRoute/:eventId', async (req,res) =>{
+    eventRouter.get('/events/hasRoute/:eventId', async (req,res) =>{
         const eveID = parseInt(req.params.eventId, 10);
 
 
@@ -67,7 +65,7 @@ app.post('/events', async (req,res) =>{
     });
 
 // Get all events
-app.get('/events', async (req,res) =>{
+eventRouter.get('/events', async (req,res) =>{
 Event.find({}).exec().then((events) =>{
 
     return res.status(200).json(events);
@@ -81,7 +79,7 @@ Event.find({}).exec().then((events) =>{
 });
 let pending = 0;
 // Retrive events with ships from username
-app.get('/events/myEvents/findFromUsername', async (req,res) =>{
+eventRouter.get('/events/myEvents/findFromUsername', async (req,res) =>{
 
    const events: any = [{ }];
     Ship.find({emailUsername: req.body.emailUsername}).exec().then((ships) =>{
@@ -129,7 +127,7 @@ else{
 });
 // Find single event with the given eventID
 
-app.get('/events/:eventId', async (req,res) =>{
+eventRouter.get('/events/:eventId', async (req,res) =>{
 Event.findOne({eventId: parseInt(req.params.eventId, 10)}).exec().then((foundEvent) =>{
 
     if(!foundEvent){
@@ -146,7 +144,7 @@ Event.findOne({eventId: parseInt(req.params.eventId, 10)}).exec().then((foundEve
 
 });
 // Updating Event Using eventID
-app.put('events/:eventId', async (req,res) =>{
+eventRouter.put('events/:eventId', async (req,res) =>{
     const newEvent = req.body;
     newEvent.eventId = req.params.eventId;
     Event.updateOne({eventId: parseInt(req.params.eventId, 10)}, newEvent).exec().then((_Event) =>{
@@ -164,7 +162,7 @@ app.put('events/:eventId', async (req,res) =>{
 });
 // Updating event property "isLive" to true
 
-app.put('events/startEvent/:eventId', async (req,res) =>{
+eventRouter.put('events/startEvent/:eventId', async (req,res) =>{
 
     const updatedEvent = {isLive: true, actualEventStart: req.body.actualEventStart}
     Event.findOneAndUpdate({eventId: parseInt(req.params.eventId, 10)}, updatedEvent, {new:true}).exec().then((_event) =>{
@@ -178,7 +176,7 @@ app.put('events/startEvent/:eventId', async (req,res) =>{
 })
 
 // Stop Event update PRoperty
-app.put('events/stopEvent/:eventId', async (req,res) =>{
+eventRouter.put('events/stopEvent/:eventId', async (req,res) =>{
 
     Event.findOneAndUpdate({eventId: parseInt(req.params.eventId, 10)},{isLive:false}, {new:true}).exec().then((_event) =>{
         if(!_event){
@@ -191,7 +189,7 @@ app.put('events/stopEvent/:eventId', async (req,res) =>{
 })
 
 // Deleting Event
-app.delete('events/:eventId', async (req,res) =>{
+eventRouter.delete('events/:eventId', async (req,res) =>{
 
     Event.findOneAndDelete({eventId: parseInt(req.params.eventId, 10)}).exec().then((_event) =>{
         if(!_event){
@@ -218,3 +216,4 @@ app.delete('events/:eventId', async (req,res) =>{
 
 })
 
+export default eventRouter;

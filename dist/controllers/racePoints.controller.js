@@ -27,24 +27,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-const express_1 = __importDefault(require("express"));
-const cors_1 = __importDefault(require("cors"));
-const bodyParser = __importStar(require("body-parser"));
 const dotenv = __importStar(require("dotenv"));
-const DB_1 = require("../Sessions/DB");
 const racePoint_1 = require("../models/racePoint");
+const express_1 = require("express");
+const racePointsRouter = express_1.Router();
 dotenv.config({ path: 'config/week10.env' });
-const app = express_1.default();
 const secret = 'secret';
-app.use(cors_1.default());
-app.use(express_1.default.static('public'));
-app.use(bodyParser.json());
-DB_1.DB.connect();
-app.post('/racepoints/createRoute/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+racePointsRouter.post('/racepoints/createRoute/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     racePoint_1.RacePoint.deleteMany({ eventId: parseInt(req.params.eventId) }).exec().then((result) => {
         const racePoints = req.body;
         if (Array.isArray(racePoints)) {
@@ -71,18 +61,19 @@ app.post('/racepoints/createRoute/:eventId', (req, res) => __awaiter(void 0, voi
         return res.status(500).send({ message: error.message || "failed to delete route" });
     });
 }));
-app.get('/racepoints/fromEventId/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+racePointsRouter.get('/racepoints/fromEventId/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     racePoint_1.RacePoint.find({ eventId: parseInt(req.params.eventId) }, { _id: 0, __v: 0 }, { sort: { racePointNumber: 1 } }).exec().then((racePoints) => {
         return res.status(200).send(racePoints);
     }).catch((error) => {
         return res.status(500).send({ message: error.message || "Some error occurred while retriving racepoints" });
     });
 }));
-app.get('/racePoints/findStartAndFinish/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+racePointsRouter.get('/racePoints/findStartAndFinish/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     racePoint_1.RacePoint.find({ eventId: parseInt(req.params.eventId), $or: [{ type: 'startLine' }, { type: 'finishLine' }] }, { _id: 0, __v: 0 }).exec().then((racePoints) => {
         res.status(200).json(racePoints);
     }).catch((error) => {
         return res.status(500).send({ message: error.message || "Some error occurred while retriving racepoints" });
     });
 }));
+exports.default = racePointsRouter;
 //# sourceMappingURL=racePoints.controller.js.map

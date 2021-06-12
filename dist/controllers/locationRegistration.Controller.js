@@ -27,29 +27,19 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-const express_1 = __importDefault(require("express"));
-const cors_1 = __importDefault(require("cors"));
-const bodyParser = __importStar(require("body-parser"));
 const dotenv = __importStar(require("dotenv"));
 const user_1 = require("../models/user");
-const DB_1 = require("../Sessions/DB");
 const racePoint_1 = require("../models/racePoint");
 const locationRegistration_1 = require("../models/locationRegistration");
 const event_1 = require("../models/event");
 const eventRegistration_1 = require("../models/eventRegistration");
 const ship_1 = require("../models/ship");
+const express_1 = require("express");
+const locationRouter = express_1.Router();
 dotenv.config({ path: 'config/week10.env' });
-const app = express_1.default();
 const secret = 'secret';
-app.use(cors_1.default());
-app.use(express_1.default.static('public'));
-app.use(bodyParser.json());
-DB_1.DB.connect();
-app.post('/locationRegistrations/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+locationRouter.post('/locationRegistrations/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const locationRegistration = new locationRegistration_1.LocationReg(req.body);
     module.exports.createLocationRegistration(locationRegistration, res, (error, locationReg) => {
         return res.status(201).json(locationReg);
@@ -189,7 +179,7 @@ function CalculateDistance(first, second) {
 }
 // Checks which racepoint the ship has reached last
 let pending = 0;
-app.get('/locationRegistrations/getLive/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+locationRouter.get('/locationRegistrations/getLive/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     eventRegistration_1.EventReg.find({ eventId: parseInt(req.params.eventId) }, { _id: 0, __v: 0 }).exec().then((eventRegistrations) => {
         const fewRegistrations = [];
         eventRegistrations.forEach(eventRegistration => {
@@ -223,7 +213,7 @@ app.get('/locationRegistrations/getLive/:eventId', (req, res) => __awaiter(void 
     });
 }));
 let pending2 = 0;
-app.get('/locationRegistrations/getReplay/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+locationRouter.get('/locationRegistrations/getReplay/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     eventRegistration_1.EventReg.find({ eventId: parseInt(req.params.eventId, 10) }, { _id: 0, __v: 0 }).exec().then((eventRegistrations) => {
         if (eventRegistrations.length !== 0) {
             const shipLocations = [];
@@ -251,7 +241,7 @@ app.get('/locationRegistrations/getReplay/:eventId', (req, res) => __awaiter(voi
     });
 }));
 let pending3 = 0;
-app.get('/locationRegistrations/getScoreboard/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+locationRouter.get('/locationRegistrations/getScoreboard/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     eventRegistration_1.EventReg.find({ eventId: parseInt(req.params.eventId) }, { _id: 0, __v: 0 }).exec().then((eventRegistrations) => {
         if (eventRegistrations.length !== 0) {
             const scores = [];
@@ -302,7 +292,7 @@ app.get('/locationRegistrations/getScoreboard/:eventId', (req, res) => __awaiter
         return res.status(500).send({ message: error.message || "Some error occurred while retriving eventRegistrations" });
     });
 }));
-app.delete('/locationRegistrations/deleteFromEventRegId/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+locationRouter.delete('/locationRegistrations/deleteFromEventRegId/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     locationRegistration_1.LocationReg.deleteMany({ eventRegId: parseInt(req.params.eventId) }).exec().then((locationRegistrations) => {
         if (!locationRegistrations)
             return res.status(404).send({ message: "LocationRegistrations not found with eventRegId " + req.params.eventId });
@@ -311,4 +301,5 @@ app.delete('/locationRegistrations/deleteFromEventRegId/:eventId', (req, res) =>
         return res.status(500).send({ message: "Error deleting locationRegistrations with eventRegId " + req.params.eventId });
     });
 }));
+exports.default = locationRouter;
 //# sourceMappingURL=locationRegistration.Controller.js.map

@@ -1,25 +1,19 @@
-import express from 'express';
-import cors from 'cors';
-import * as bodyParser from 'body-parser';
+
 import * as dotenv from 'dotenv';
 import {User, IUser} from '../models/user'
-import { DB } from '../Sessions/DB';
 import * as bcrypt from 'bcrypt'
 import * as jwt from 'jsonwebtoken'
-import { AnyObject, Collection } from 'mongoose';
-
+import {Router} from 'express'
 
 
  dotenv.config({ path: 'config/week10.env' });
- const app = express();
+const UserRouter = Router();
  const secret = 'secret';
- app.use(cors());
- app.use(express.static('public'));
- app.use(bodyParser.json());
- DB.connect();
+
 
  // GetAllUsers
- app.get('/users', async (req,res) =>{
+
+ UserRouter.get('/users', async (req,res) =>{
   User.find().exec().then((results) =>{
         return res.status(200).json( results);
 
@@ -33,7 +27,7 @@ import { AnyObject, Collection } from 'mongoose';
 });
 
 // GET USER BY USERNAME
-app.get('/users/:uid', (req,res) => {
+UserRouter.get('/users/:uid', (req,res) => {
 
     User.findOne({emailUsername: req.params.uid}).exec().then((result) =>{
         return res.status(200).json(result);
@@ -50,7 +44,7 @@ app.get('/users/:uid', (req,res) => {
 });
 
 // LOGIN API
-app.post('/users/login', (req,res) => {
+UserRouter.post('/users/login', (req,res) => {
   console.log("userTryingtologin");
   const username = req.body.emailUsername;
   const passw = req.body.password;
@@ -85,7 +79,7 @@ res.status(200).send({emailUsername: user.emailUsername, firstname : user.firstn
 });
 
 // REGISTER USER
-app.post('/users/register', (req,res) => {
+UserRouter.post('/users/register', (req,res) => {
   const username = req.body.emailUsername;
 User.findOne({ emailUsername: username }).exec().then((user) => {
   if(user)
@@ -116,7 +110,7 @@ User.findOne({ emailUsername: username }).exec().then((user) => {
  * TODO:
  * ADDING AUTHENTICATION + CHECKING ROLE OF ACTUAL USER.
  */
- app.post('/users/registerAdmin', (req,res) => {
+ UserRouter.post('/users/registerAdmin', (req,res) => {
   const username = req.body.emailUsername;
 User.findOne({ emailUsername: username }).exec().then((user) => {
   if(!user)
@@ -135,7 +129,7 @@ User.findOne({ emailUsername: username }).exec().then((user) => {
 });
 
 // DELETE USER
-app.delete('/users/:uid', (req,res) => {
+UserRouter.delete('/users/:uid', (req,res) => {
   const username = req.params.uid;
 User.findOneAndDelete({emailUsername: username}).exec().then((result) =>{
   if(!result){
@@ -150,7 +144,7 @@ User.findOneAndDelete({emailUsername: username}).exec().then((result) =>{
 });
 
 // Update Existing User
-app.put('/users/:uid', (req,res) => {
+UserRouter.put('/users/:uid', (req,res) => {
   const username = req.params.uid;
   const hashedPassword = bcrypt.hashSync(req.body.password,10);
   const Firstname = req.body.firstname;
@@ -183,4 +177,4 @@ app.put('/users/:uid', (req,res) => {
 
     });
 });
-  export { app}
+export default UserRouter

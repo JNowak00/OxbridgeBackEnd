@@ -10,20 +10,19 @@ import { Collection } from 'mongoose';
 import { IShip, Ship } from '../models/ship';
 import { User } from '../models/user';
 import {Event} from '../models/event'
-
-
+import {Router} from 'express'
 
 
  dotenv.config({ path: 'config/week10.env' });
- const app = express();
+const eventRegRouter = Router();
+
+
+
+
  const secret = 'secret';
- app.use(cors());
- app.use(express.static('public'));
- app.use(bodyParser.json());
- DB.connect();
 
 
-    app.post('/eventRegistrations/', async (req,res) =>{
+ eventRegRouter.route('/eventRegistrations/').post( async (req,res) =>{
 
 
       const reg = new EventReg(req.body);
@@ -31,7 +30,6 @@ import {Event} from '../models/event'
          return res.status(201).json(reg);
     }
          );
-
  exports.CreateRegistration = (newRegistration: IEventReg,res:  any, callback: any) =>{
 
       EventReg.findOne({}).sort('-eventRegId').exec().then((_lastEventRegistration) =>{
@@ -57,7 +55,7 @@ import {Event} from '../models/event'
     /**
      * Get all events
      */
-app.get('/eventRegistrations/', async (req,res) =>{
+     eventRegRouter.get('/eventRegistrations/', async (req,res) =>{
    EventReg.find({}).exec().then((_eventRegs) =>{
       return res.status(200).json(_eventRegs)
 
@@ -72,7 +70,7 @@ app.get('/eventRegistrations/', async (req,res) =>{
  *
  */
 let pending = 0;
-app.get('/eventRegistrations/getParticipants/:eventId', async (req,res) =>{
+eventRegRouter.get('/eventRegistrations/getParticipants/:eventId', async (req,res) =>{
 
    const participants: any = [{}];
    const eventID = parseInt(req.params.eventId, 10);
@@ -130,7 +128,7 @@ app.get('/eventRegistrations/getParticipants/:eventId', async (req,res) =>{
  * fIND EVENT FROM USERNAME
  * @param eventId
  */
-app.get('/eventRegistrations/findEventRegFromUsername/:eventId', async (req,res) =>{
+ eventRegRouter.get('/eventRegistrations/findEventRegFromUsername/:eventId', async (req,res) =>{
 let pending2 = 0;
 Ship.find({emailUsername: req.body.emailUsername}).exec().then((ships)=>{
 
@@ -159,7 +157,7 @@ if(eventRegistration){
 /**\
  * SING UP TO THE EVENT
  */
-app.post('/eventRegistrations/signUp', async (req,res) =>{
+ eventRegRouter.post('/eventRegistrations/signUp', async (req,res) =>{
 
  Event.findOne({eventCode: req.body.eventCode}).exec().then((_event) =>{
    if(!_event){
@@ -195,7 +193,7 @@ app.post('/eventRegistrations/signUp', async (req,res) =>{
  * Add PARTICIPANT TO EVENT/CREATE ONE PARTICIPANT
  *
  */
-app.post('/eventRegistrations/addParticipant', async (req,res) =>{
+ eventRegRouter.post('/eventRegistrations/addParticipant', async (req,res) =>{
 
 User.findOne({emailUsername: req.body.emailUsername}).exec().then((user)=>{
 
@@ -271,7 +269,7 @@ else{
 
 });
 // Update User with EventRegId
-app.put('/eventRegistrations/updateParticipant/:eventRegId', async (req,res) =>{
+eventRegRouter.put('/eventRegistrations/updateParticipant/:eventRegId', async (req,res) =>{
 
  const  eventID = parseInt(req.params.eventRegId,10);
  EventReg.findOneAndUpdate({eventRegId: eventID}, req.body).exec().then((eventReg)=>{
@@ -317,7 +315,7 @@ app.put('/eventRegistrations/updateParticipant/:eventRegId', async (req,res) =>{
 
 
 
-app.delete('/eventRegistrations/:eventRegId', async (req,res) =>{
+eventRegRouter.delete('/eventRegistrations/:eventRegId', async (req,res) =>{
 
    const eventRID = parseInt(req.params.eventRegId,10)
    EventReg.findOneAndDelete({eventRegId: eventRID}).exec().then((eventRegistration)=>{
@@ -333,3 +331,4 @@ app.delete('/eventRegistrations/:eventRegId', async (req,res) =>{
    })
 })
 
+export default eventRegRouter;
