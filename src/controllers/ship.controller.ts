@@ -10,6 +10,7 @@ import { AnyObject, Collection } from 'mongoose';
 import { Ship } from '../models/ship';
 import { EventReg } from '../models/eventRegistration';
 import {Router} from 'express'
+import * as Auth from '../controllers/AuthenticationController'
 
 const shipRouter = Router();
 
@@ -24,7 +25,12 @@ const shipRouter = Router();
   */
   shipRouter.post('/ships', async (req,res) =>{
 
+    Auth.Authorize(req,res, "user", (error: any) =>{
+        if(error)
+        return error;
+
         const ship = new Ship(req.body);
+
         Ship.findOne({}).sort('-shipId').exec().then((lastShip) =>{
 
             if(lastShip){
@@ -33,12 +39,14 @@ const shipRouter = Router();
             else{
                 ship.shipId = 1;
             }
+
             ship.save()
             return res.status(201).json(ship);
         }).catch((error) =>{
 
             return res.status(500).send({message: error.message|| "Some error occurred"})
         })
+    })
  });
  /**
   * Get User Ships

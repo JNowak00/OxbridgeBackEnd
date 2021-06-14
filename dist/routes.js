@@ -11,11 +11,11 @@ const locationRegistration_Controller_1 = __importDefault(require("./controllers
 const ship_controller_1 = __importDefault(require("./controllers/ship.controller"));
 const racePoints_controller_1 = __importDefault(require("./controllers/racePoints.controller"));
 const routes = express_1.Router();
-routes.use('/', user_controller_1.default);
-routes.use('/', event_RegController_1.default);
-routes.use('/', eventController_1.default);
-routes.use('/', locationRegistration_Controller_1.default);
-routes.use('/', ship_controller_1.default);
-routes.use('/', racePoints_controller_1.default);
+routes.use('', user_controller_1.default);
+routes.use('', event_RegController_1.default);
+routes.use('', eventController_1.default);
+routes.use('', locationRegistration_Controller_1.default);
+routes.use('', ship_controller_1.default);
+routes.use('', racePoints_controller_1.default);
 exports.default = routes;
 //# sourceMappingURL=routes.js.map

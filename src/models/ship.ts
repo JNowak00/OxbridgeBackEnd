@@ -9,8 +9,8 @@ interface IShip extends Document{
 
 const ShipSchema: Schema = new Schema({
     shipId: {type: Number, required: true, unique: true},
-    emailUsername: {type: String, required: true},
-    name:  {type: String, required: true},
+    emailUsername: {type: String, required: false},
+    name:  {type: String, required: false},
 
 });
 const Ship: Model<IShip> = model('Ship', ShipSchema);

@@ -63,15 +63,15 @@ UserRouter.post('/users/login', (req, res) => {
     console.log("userTryingtologin");
     const username = req.body.emailUsername;
     const passw = req.body.password;
-    user_1.User.findOne({ emailUsername: username }).exec().then((user) => {
+    user_1.User.findOne({ emailUsername: username }).exec().then((_user) => {
         // const passwordIsValid =  bcrypt.compare(user.password,req.body.password);
-        console.log(user.emailUsername);
+        const uN = _user.emailUsername;
+        console.log(_user.emailUsername);
         console.log(passw);
-        console.log(user.password);
-        if (!user)
+        console.log(_user.password);
+        if (!_user) {
             return res.status(403).json('Username incorrect');
-        const uname = "test@test.com";
-        const pass = "test123";
+        }
         /**
          * TO DO
          * IMPLEMENT THE BCRYPT COMPARING PASSWORD
@@ -79,12 +79,13 @@ UserRouter.post('/users/login', (req, res) => {
          * PROBLEM:
          * WONT COMPARE PASSWORD FROM WEBSITE TO DB PASSWORD
          */
-        // bcrypt.compareSync(req.body.password,user.password );
-        //  console.log(passwordIsValid);
-        // if (!passwordIsValid)
-        //  return res.status(401).send("error")// { auth: false, token: null, message: "Invalid password" });
-        const token = jwt.sign({ id: user.emailUsername, role: user.role }, secret, { expiresIn: 86400 });
-        res.status(200).send({ emailUsername: user.emailUsername, firstname: user.firstname, lastname: user.lastname, auth: true, token });
+        const passwordIsValid = bcrypt.compareSync(passw, _user.password);
+        console.log(passwordIsValid);
+        if (!passwordIsValid)
+            return res.status(401).send({ auth: false, token: null, message: "Invalid password" });
+        const token = jwt.sign({ id: uN, role: _user.role }, 'secret', { expiresIn: 1000000 });
+        console.log(uN);
+        res.status(200).send({ firstname: _user.firstname, emailUsername: uN, lastname: _user.lastname, auth: true, token });
     }).catch((error) => {
         if (error)
             return res.status(500).send('Error on the server');

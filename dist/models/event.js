@@ -9,8 +9,8 @@ const EventSchema = new mongoose_1.Schema({
     eventEnd: { type: Date, required: true },
     city: { type: String, required: true },
     eventCode: { type: String, required: true },
-    actualEventStart: { type: Date, required: true },
-    isLive: { type: Boolean, required: true },
+    actualEventStart: { type: Date, required: false },
+    isLive: { type: Boolean, required: false },
 });
 const Event = mongoose_1.model('Event', EventSchema);
 exports.Event = Event;

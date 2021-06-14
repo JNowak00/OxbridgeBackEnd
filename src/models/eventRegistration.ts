@@ -8,13 +8,13 @@ interface IEventReg extends Document{
     teamName : string
 }
 
-const EventRegSchema: Schema = new Schema({
-    eventRegId: {type: Number, required: true, unique: true},
+const EventRegistrationSchema: Schema = new Schema({
+    eventRegId: {type: Number, required: false, unique: true},
     shipId: {type: Number, required: true},
     eventId: {type: Number, required: true},
-    trackColor:  {type: String, required: true},
+    trackColor:  {type: String, required: false},
     teamName: {type: String, required: true},
 
 });
-const EventReg: Model<IEventReg> = model('EventReg', EventRegSchema);
+const EventReg: Model<IEventReg> = model('EventRegistration', EventRegistrationSchema);
 export{EventReg,IEventReg}
