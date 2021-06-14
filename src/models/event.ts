@@ -19,8 +19,8 @@ const EventSchema: Schema = new Schema({
     eventEnd:  {type: Date, required: true},
     city: {type: String, required: true},
     eventCode: {type: String, required: true},
-    actualEventStart: {type: Date, required: true},
-    isLive: {type: Boolean, required: true},
+    actualEventStart: {type: Date, required: false},
+    isLive: {type: Boolean, required: false},
 
 });
 const Event: Model<IEvent> = model('Event', EventSchema);

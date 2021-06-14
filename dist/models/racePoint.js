@@ -12,6 +12,6 @@ const RacePointSchema = new mongoose_1.Schema({
     eventId: { type: Number, required: true },
     racePointNumber: { type: Number, required: true },
 });
-const RacePoint = mongoose_1.model('Event', RacePointSchema);
+const RacePoint = mongoose_1.model('RacePoint', RacePointSchema);
 exports.RacePoint = RacePoint;
 //# sourceMappingURL=racePoint.js.map
