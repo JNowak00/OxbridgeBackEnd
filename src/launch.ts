@@ -13,11 +13,18 @@ dotenv.config({ path: 'config/week10.env' });
 
  const secret = 'secret';
  const app = express();
- app.use(express.json())
- app.use(routes);
+
+
  DB.connect();
+const allowedOrigins = ["http://localhost:4200"];
+const options: cors.CorsOptions ={
+    origin: allowedOrigins
+}
+app.use(cors(options))
+app.use(express.json())
+ app.use(bodyParser.json())
 
-
+ app.use(routes);
 const port = 3000;
 
 

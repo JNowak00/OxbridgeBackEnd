@@ -6,7 +6,9 @@
     "prebuild": "tslint -c tslint.json -p    tsconfig.json --fix",
     "build": "tsc && copy package.json dist\\package.json",
     "prestart": "npm run build",
-    "start": "nodemon ./src/launch.ts"
+    "start": "nodemon ./src/launch.ts",
+    "Access-Control-Allow-Origin:" : "*"
+
   },
   "keywords": [],
   "author": "",

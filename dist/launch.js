@@ -23,15 +23,23 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
+const cors_1 = __importDefault(require("cors"));
+const bodyParser = __importStar(require("body-parser"));
 const dotenv = __importStar(require("dotenv"));
 const DB_1 = require("./Sessions/DB");
 const routes_1 = __importDefault(require("./routes"));
 dotenv.config({ path: 'config/week10.env' });
 const secret = 'secret';
 const app = express_1.default();
-app.use(express_1.default.json());
-app.use(routes_1.default);
 DB_1.DB.connect();
+const allowedOrigins = ["http://localhost:4200"];
+const options = {
+    origin: allowedOrigins
+};
+app.use(cors_1.default(options));
+app.use(express_1.default.json());
+app.use(bodyParser.json());
+app.use(routes_1.default);
 const port = 3000;
 const server = app.listen(port, () => {
     console.log('Running in this mode: ' + process.env.NODE_ENV);

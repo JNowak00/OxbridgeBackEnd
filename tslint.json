@@ -12,6 +12,7 @@
         "radix": false,
         "no-shadowed-variable": false,
         "only-arrow-functions": false
+        
     },
     "rulesDirectory": []
 }
