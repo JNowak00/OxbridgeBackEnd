@@ -32,6 +32,7 @@ const dotenv = __importStar(require("dotenv"));
 const ship_1 = require("../models/ship");
 const eventRegistration_1 = require("../models/eventRegistration");
 const express_1 = require("express");
+const Auth = __importStar(require("../controllers/AuthenticationController"));
 const shipRouter = express_1.Router();
 dotenv.config({ path: 'config/week10.env' });
 const secret = 'secret';
@@ -39,18 +40,22 @@ const secret = 'secret';
  * Crerating Ship
  */
 shipRouter.post('/ships', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const ship = new ship_1.Ship(req.body);
-    ship_1.Ship.findOne({}).sort('-shipId').exec().then((lastShip) => {
-        if (lastShip) {
-            ship.shipId = lastShip.shipId + 1;
-        }
-        else {
-            ship.shipId = 1;
-        }
-        ship.save();
-        return res.status(201).json(ship);
-    }).catch((error) => {
-        return res.status(500).send({ message: error.message || "Some error occurred" });
+    Auth.Authorize(req, res, "user", (error) => {
+        if (error)
+            return error;
+        const ship = new ship_1.Ship(req.body);
+        ship_1.Ship.findOne({}).sort('-shipId').exec().then((lastShip) => {
+            if (lastShip) {
+                ship.shipId = lastShip.shipId + 1;
+            }
+            else {
+                ship.shipId = 1;
+            }
+            ship.save();
+            return res.status(201).json(ship);
+        }).catch((error) => {
+            return res.status(500).send({ message: error.message || "Some error occurred" });
+        });
     });
 }));
 /**

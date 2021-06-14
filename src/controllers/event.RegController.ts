@@ -22,15 +22,23 @@ const eventRegRouter = Router();
  const secret = 'secret';
 
 
- eventRegRouter.route('/eventRegistrations/').post( async (req,res) =>{
+ eventRegRouter.post('/eventRegistrations/', async (req,res) =>{
 
 
       const reg = new EventReg(req.body);
-      module.exports.CreateRegistration(reg,res);
+      CreateRegistration(reg,res)
+
          return res.status(201).json(reg);
     }
          );
- exports.CreateRegistration = (newRegistration: IEventReg,res:  any, callback: any) =>{
+ function CreateRegistration(newRegistration: any,res:  any){
+
+   validateForeignKeys(newRegistration, res, (err: any) => {
+      if (err)
+          return err;
+   })
+
+    const newEventReg = newRegistration;
 
       EventReg.findOne({}).sort('-eventRegId').exec().then((_lastEventRegistration) =>{
          if(_lastEventRegistration)
@@ -40,12 +48,12 @@ const eventRegRouter = Router();
             newRegistration.eventRegId = 1;
 
          }
-         newRegistration.save();
-         return callback(null,newRegistration);
+         newEventReg.save()
+         return newEventReg;
 
       }).catch((error) =>{
             if(error){
-               return callback(res.send(error));
+               return res.send(error);
 
             }
 
@@ -55,7 +63,7 @@ const eventRegRouter = Router();
     /**
      * Get all events
      */
-     eventRegRouter.get('/eventRegistrations/', async (req,res) =>{
+     eventRegRouter.get('/eventRegistrations', async (req,res) =>{
    EventReg.find({}).exec().then((_eventRegs) =>{
       return res.status(200).json(_eventRegs)
 
@@ -73,20 +81,24 @@ let pending = 0;
 eventRegRouter.get('/eventRegistrations/getParticipants/:eventId', async (req,res) =>{
 
    const participants: any = [{}];
-   const eventID = parseInt(req.params.eventId, 10);
+   const eventID = parseInt(req.params.eventId);
    EventReg.find({eventId: eventID}).exec().then((eventRegs) =>{
+
       if(!eventRegs||eventRegs.length ===0)
-         return res.status(404).send("NO PARTICIPANT FOUND")
+        
+      return res.status(404).send("NO PARTICIPANT FOUND")
+
          if(eventRegs){
-            eventRegs.forEach(eventRegistration =>{
+            eventRegs.forEach(eveReg=>{
                pending++;
-               Ship.findOne({shipId: eventRegistration.shipId}).exec().then((ship) =>{
+
+               Ship.findOne({shipId: eveReg.shipId}).exec().then((ship) =>{
                   if(!ship){
                    return res.status(404).send('Ship Not Found');
 }
-                  else if(ship){
+                  if(ship){
                      User.findOne({emailUsername: ship.emailUsername}).exec().then((user) =>{
-                       pending--;
+                       
                         if(!user){
                            return res.status(404).send('User NOT FOUND');
                         }
@@ -95,17 +107,17 @@ eventRegRouter.get('/eventRegistrations/getParticipants/:eventId', async (req,re
                               "firstname": user.firstname,
                               "lastname": user.lastname,
                               "shipName": ship.name,
-                              "teamName": eventRegistration.teamName,
+                              "teamName": eveReg.teamName,
                               "emailUsername": user.emailUsername,
-                              "eventRegId": eventRegistration.eventRegId
+                              "eventRegId": eveReg.eventRegId
                            }
                            participants.push(participant);
-                           if(pending===0){
-                              return res.status(200).json(participants);
-                           }
+                          
                         }
-
-
+                        pending--;
+                        if(pending===0){
+                           return res.status(200).json(participants);
+                        }
                         }).catch((error) =>{
 
                            return res.status(500).send('Error retrieving user');
@@ -128,30 +140,28 @@ eventRegRouter.get('/eventRegistrations/getParticipants/:eventId', async (req,re
  * fIND EVENT FROM USERNAME
  * @param eventId
  */
+ let pending2 = 0;
  eventRegRouter.get('/eventRegistrations/findEventRegFromUsername/:eventId', async (req,res) =>{
-let pending2 = 0;
-Ship.find({emailUsername: req.body.emailUsername}).exec().then((ships)=>{
 
-   ships.forEach(ship =>{
-pending2++;
-const eventID = parseInt(req.params.eventId,10);
-EventReg.find({eventId: eventID, shipId: ship.shipId}).exec().then((eventRegistration) =>{
-pending2--;
-if(eventRegistration){
-   return res.status(200).send(eventRegistration);
-}
+   Ship.find({emailUsername: req.body.emailUsername}).exec().then((ships)=>{
 
-}).catch((error) =>{
+         ships.forEach(ship =>{
+            pending2++;
+            const eventID = parseInt(req.params.eventId,10);
+            EventReg.find({eventId: eventID, shipId: ship.shipId}).exec().then((eventRegistration) =>{
+            pending2--;
+            if(eventRegistration){
+               return res.status(200).send(eventRegistration);
+               }
 
-   return res.status(500).send('Serverside Error');
-})
+            }).catch((error) =>{
+                           return res.status(500).send('Serverside Error');
+               })
 
-   })
-
-}).catch((error)=>{
-
-   return res.status(500).send('Error on server side')
-})
+         })
+   }).catch((error)=>{
+            return res.status(500).send('Error on server side')
+      })
 
 })
 /**\
@@ -172,7 +182,7 @@ if(eventRegistration){
          if(!eventRegistration){
             const registration = new EventReg(req.body);
             registration.eventId = _event.eventId;
-            module.exports.CreateRegistration(registration,res)
+            CreateRegistration(registration,res)
                return res.status(201).json(registration)
                }
 
@@ -210,49 +220,54 @@ if(!user){
    newUser.save();
 }
 Ship.findOne({emailUsername: req.body.emailUsername, name: req.body.shipName}).exec().then((ship)=>{
-if(!ship){
 
-   const newShip = new Ship({
-         "name": req.body.shipName,
-         "emailUsername": req.body.emailUsername
-   });
-   Ship.findOne({}).sort('-shipId').exec().then((lastShip)=>{
-      if(lastShip){
-         newShip.shipId = lastShip.shipId +1;}
-      else{
-         newShip.shipId = 1;}
+         if(!ship){
 
-      newShip.save()
-      const newEventRegistration = new EventReg(
-         {
-           "eventId": req.body.eventId,
-            "shipId": newShip.shipId,
-            "trackColor": "Yellow",
-            "teamName": req.body.teamName});
-            module.exports.CreateRegistration(newEventRegistration,res)
+            const newShip = new Ship({
+                  "name": req.body.shipName,
+                  "emailUsername": req.body.emailUsername
+            });
+            Ship.findOne({}).sort('-shipId').exec().then((lastShip)=>{
+               if(lastShip){
+                  newShip.shipId = lastShip.shipId +1;
+               }
+               else{
+                  newShip.shipId = 1;
+               }
 
-   }).catch((error) =>{
+               newShip.save()
+               const newEventRegistration = new EventReg(
+                  {
+                     "eventId": req.body.eventId,
+                     "shipId": newShip.shipId,
+                     "trackColor": "Yellow",
+                     "teamName": req.body.teamName});
+                     CreateRegistration(newEventRegistration,res)
+                     return res.status(201).send(newEventRegistration)
 
-      return res.status(500).send('Some error occurred')
-   })
+            }).catch((error) =>{
+
+                return res.status(500).send({message: error.message})
+            })
 
 
 
-}
-else{
-   const newEventRegistration = new EventReg(
-      {
-        "eventId": req.body.eventId,
-         "shipId": ship.shipId,
-         "trackColor": "Yellow",
-         "teamName": req.body.teamName});
-         module.exports.CreateRegistration(newEventRegistration,res)
+            }
+         else{
+               const newEventRegistration = new EventReg(
+                  {
+                  "eventId": req.body.eventId,
+                     "shipId": ship.shipId,
+                     "trackColor": "Yellow",
+                     "teamName": req.body.teamName});
+                     CreateRegistration(newEventRegistration,res)
+                     return res.status(201).send(newEventRegistration);
 
-}
+               }
 
-}).catch((error) =>{
-   return res.status(500).send("Some error ocurred")
-})
+         }).catch((error) =>{
+            return res.status(500).send({message: error.message})
+         })
 
 
 
@@ -330,5 +345,28 @@ eventRegRouter.delete('/eventRegistrations/:eventRegId', async (req,res) =>{
       return res.status(500).send({message: "Error deleting eventRegistration with eventRegId: "+ req.params.eventRegId})
    })
 })
+
+function validateForeignKeys(registration:any , res:any, callback:any) {
+   // Checking if ship exists
+   Ship.findOne({ shipId: registration.shipId }).exec().then((ship) =>{
+
+      if (!ship)
+      return callback(res.status(404).send({ message: "Ship with id " + registration.shipId + " was not found" }));
+  
+ // Checking if event exists
+   Event.findOne({ eventId: registration.eventId }).exec().then((event) => {
+              
+         if (!event)
+               return callback(res.status(404).send({ message: "Race with id " + registration.eventId + " was not found" }));
+
+         return callback();
+       }).catch((error) =>{
+         return callback(res.status(500).send({ message: error.message || "Some error occurred while retriving races" }));
+
+       })
+   }).catch((error) =>{
+         return callback(res.status(500).send({ message: error.message || "Some error occurred while retriving ships" }));
+   }) 
+};
 
 export default eventRegRouter;

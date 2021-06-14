@@ -7,10 +7,10 @@ import shipRouter from './controllers/ship.controller'
 import racePointsRouter from './controllers/racePoints.controller'
 const routes = Router();
 
-routes.use('/', UserRouter);
-routes.use('/',eventRegRouter)
-routes.use('/', eventRouter)
-routes.use('/', locationRouter)
-routes.use('/', shipRouter)
-routes.use('/', racePointsRouter)
+routes.use('', UserRouter);
+routes.use('', eventRegRouter)
+routes.use('', eventRouter)
+routes.use('', locationRouter)
+routes.use('', shipRouter)
+routes.use('', racePointsRouter)
 export default routes;

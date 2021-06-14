@@ -38,30 +38,31 @@ const express_1 = require("express");
 dotenv.config({ path: 'config/week10.env' });
 const eventRegRouter = express_1.Router();
 const secret = 'secret';
-eventRegRouter.route('/eventRegistrations/').post((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+eventRegRouter.post('/eventRegistrations/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const reg = new eventRegistration_1.EventReg(req.body);
-    module.exports.CreateRegistration(reg, res);
+    CreateRegistration(reg, res);
     return res.status(201).json(reg);
 }));
-exports.CreateRegistration = (newRegistration, res, callback) => {
+function CreateRegistration(newRegistration, res) {
+    const newEventReg = newRegistration;
     eventRegistration_1.EventReg.findOne({}).sort('-eventRegId').exec().then((_lastEventRegistration) => {
         if (_lastEventRegistration)
             newRegistration.eventRegId = _lastEventRegistration.eventRegId + 1;
         else {
             newRegistration.eventRegId = 1;
         }
-        newRegistration.save();
-        return callback(null, newRegistration);
+        newEventReg.save();
+        return newEventReg;
     }).catch((error) => {
         if (error) {
-            return callback(res.send(error));
+            return res.send(error);
         }
     });
-};
+}
 /**
  * Get all events
  */
-eventRegRouter.get('/eventRegistrations/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+eventRegRouter.get('/eventRegistrations', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     eventRegistration_1.EventReg.find({}).exec().then((_eventRegs) => {
         return res.status(200).json(_eventRegs);
     }).catch((error) => {
@@ -75,7 +76,7 @@ eventRegRouter.get('/eventRegistrations/', (req, res) => __awaiter(void 0, void 
 let pending = 0;
 eventRegRouter.get('/eventRegistrations/getParticipants/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const participants = [{}];
-    const eventID = parseInt(req.params.eventId, 10);
+    const eventID = parseInt(req.params.eventId);
     eventRegistration_1.EventReg.find({ eventId: eventID }).exec().then((eventRegs) => {
         if (!eventRegs || eventRegs.length === 0)
             return res.status(404).send("NO PARTICIPANT FOUND");
@@ -86,7 +87,7 @@ eventRegRouter.get('/eventRegistrations/getParticipants/:eventId', (req, res) =>
                     if (!ship) {
                         return res.status(404).send('Ship Not Found');
                     }
-                    else if (ship) {
+                    if (ship) {
                         user_1.User.findOne({ emailUsername: ship.emailUsername }).exec().then((user) => {
                             pending--;
                             if (!user) {
@@ -158,7 +159,7 @@ eventRegRouter.post('/eventRegistrations/signUp', (req, res) => __awaiter(void 0
                 if (!eventRegistration) {
                     const registration = new eventRegistration_1.EventReg(req.body);
                     registration.eventId = _event.eventId;
-                    module.exports.CreateRegistration(registration, res);
+                    CreateRegistration(registration, res);
                     return res.status(201).json(registration);
                 }
             }).catch((error) => {
@@ -206,9 +207,10 @@ eventRegRouter.post('/eventRegistrations/addParticipant', (req, res) => __awaite
                         "trackColor": "Yellow",
                         "teamName": req.body.teamName
                     });
-                    module.exports.CreateRegistration(newEventRegistration, res);
+                    CreateRegistration(newEventRegistration, res);
+                    return res.status(201).send(newEventRegistration);
                 }).catch((error) => {
-                    return res.status(500).send('Some error occurred');
+                    return res.status(500).send({ message: error.message });
                 });
             }
             else {
@@ -218,10 +220,11 @@ eventRegRouter.post('/eventRegistrations/addParticipant', (req, res) => __awaite
                     "trackColor": "Yellow",
                     "teamName": req.body.teamName
                 });
-                module.exports.CreateRegistration(newEventRegistration, res);
+                CreateRegistration(newEventRegistration, res);
+                return res.status(201).send(newEventRegistration);
             }
         }).catch((error) => {
-            return res.status(500).send("Some error ocurred");
+            return res.status(500).send({ message: error.message });
         });
     }).catch((error) => {
         return res.status(500).send("Error retrieving users");
