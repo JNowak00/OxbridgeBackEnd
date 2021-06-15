@@ -36,6 +36,7 @@ eventRouter.post('/events', async (req,res) =>{
         else{
                      event.eventId = 1;
              }
+             event.isLive = false;
              event.save();
              return res.status(201).json(event);
 
