@@ -25,9 +25,10 @@ const eventRegRouter = Router();
  eventRegRouter.post('/eventRegistrations/', async (req,res) =>{
 
 
-      const reg = new EventReg(req.body);
+      let reg = new EventReg(req.body);
       CreateRegistration(reg,res)
 
+      
          return res.status(201).json(reg);
     }
          );
@@ -80,7 +81,7 @@ const eventRegRouter = Router();
 let pending = 0;
 eventRegRouter.get('/eventRegistrations/getParticipants/:eventId', async (req,res) =>{
 
-   const participants: any = [{}];
+   let participants: any = [];
    const eventID = parseInt(req.params.eventId);
    EventReg.find({eventId: eventID}).exec().then((eventRegs) =>{
 
@@ -103,7 +104,7 @@ eventRegRouter.get('/eventRegistrations/getParticipants/:eventId', async (req,re
                            return res.status(404).send('User NOT FOUND');
                         }
                         if(user){
-                          const participant = {
+                          let participant = {
                               "firstname": user.firstname,
                               "lastname": user.lastname,
                               "shipName": ship.name,

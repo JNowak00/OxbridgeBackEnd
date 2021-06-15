@@ -144,7 +144,7 @@ Event.findOne({eventId: parseInt(req.params.eventId, 10)}).exec().then((foundEve
 
 });
 // Updating Event Using eventID
-eventRouter.put('/events/:eventId', async (req,res) =>{
+eventRouter.put('/events/:eventId', async (req,res)  =>{
     const newEvent = req.body;
     newEvent.eventId = req.params.eventId;
     Event.updateOne({eventId: parseInt(req.params.eventId, 10)}, newEvent).exec().then((_Event) =>{
@@ -162,9 +162,9 @@ eventRouter.put('/events/:eventId', async (req,res) =>{
 });
 // Updating event property "isLive" to true
 
-eventRouter.put('/events/startEvent/:eventId', async (req,res) =>{
+eventRouter.put('/events/startEvent/:eventId', async (req,res, ) =>{
 
-    Event.findOneAndUpdate({eventId: parseInt(req.params.eventId)}).exec().then((_event) =>{
+    Event.findOneAndUpdate({eventId: parseInt(req.params.eventId)},{new: true}).exec().then((_event) =>{
         if(!_event){
         return res.status(404).send({message: "Event not found with this ID"+ req.params.eventId})
         }
@@ -175,6 +175,7 @@ eventRouter.put('/events/startEvent/:eventId', async (req,res) =>{
    }).catch((error) =>{
         return res.status(500).send({message: error.message|| 'server error'})
     })
+    
 })
 
 // Stop Event update PRoperty
