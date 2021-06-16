@@ -6,6 +6,8 @@ import * as jwt from 'jsonwebtoken'
 import {Router} from 'express'
 
 
+
+
  dotenv.config({ path: 'config/week10.env' });
 const UserRouter = Router();
  const secret = 'secret';
@@ -155,22 +157,17 @@ UserRouter.put('/users/:uid', (req,res) => {
   const EmailUsername = username;
   const Password = hashedPassword;
 
-
-
-
-
-
-  User.findOne( {emailUsername: username}).exec().then((user) => {
+  User.findOne( {emailUsername: username}, {new: true}).exec().then((user) => {
     if(!user){
       return res.status(400).send('User Not Found');}
 
-      user.firstname = Firstname;
-      user.lastname = Lastname;
-      user.emailUsername = EmailUsername;
-      user.password = Password;
-      user.update();
+      // user.firstname = Firstname;
+      // user.lastname = Lastname;
+      // user.emailUsername = EmailUsername;
+      // user.password = Password;
+      // user.update();
 
-    // user.updateOne({firstname: Firstname, lastname:Lastname, emailUsername: EmailUsername, password: Password})
+     user.updateOne({firstname: Firstname, lastname:Lastname, emailUsername: EmailUsername, password: Password})
 
 
     return res.status(202).json(user);

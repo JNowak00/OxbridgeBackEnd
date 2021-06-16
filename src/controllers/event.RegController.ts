@@ -11,6 +11,7 @@ import { IShip, Ship } from '../models/ship';
 import { User } from '../models/user';
 import {Event} from '../models/event'
 import {Router} from 'express'
+import {Mail} from '../mail'
 
 
  dotenv.config({ path: 'config/week10.env' });
@@ -25,10 +26,10 @@ const eventRegRouter = Router();
  eventRegRouter.post('/eventRegistrations/', async (req,res) =>{
 
 
-      let reg = new EventReg(req.body);
+      const reg = new EventReg(req.body);
       CreateRegistration(reg,res)
 
-      
+
          return res.status(201).json(reg);
     }
          );
@@ -81,12 +82,12 @@ const eventRegRouter = Router();
 let pending = 0;
 eventRegRouter.get('/eventRegistrations/getParticipants/:eventId', async (req,res) =>{
 
-   let participants: any = [];
+   const participants: any = [];
    const eventID = parseInt(req.params.eventId);
    EventReg.find({eventId: eventID}).exec().then((eventRegs) =>{
 
       if(!eventRegs||eventRegs.length ===0)
-        
+
       return res.status(404).send("NO PARTICIPANT FOUND")
 
          if(eventRegs){
@@ -99,12 +100,12 @@ eventRegRouter.get('/eventRegistrations/getParticipants/:eventId', async (req,re
 }
                   if(ship){
                      User.findOne({emailUsername: ship.emailUsername}).exec().then((user) =>{
-                       
+
                         if(!user){
                            return res.status(404).send('User NOT FOUND');
                         }
                         if(user){
-                          let participant = {
+                          const participant = {
                               "firstname": user.firstname,
                               "lastname": user.lastname,
                               "shipName": ship.name,
@@ -113,7 +114,7 @@ eventRegRouter.get('/eventRegistrations/getParticipants/:eventId', async (req,re
                               "eventRegId": eveReg.eventRegId
                            }
                            participants.push(participant);
-                          
+
                         }
                         pending--;
                         if(pending===0){
@@ -244,6 +245,16 @@ Ship.findOne({emailUsername: req.body.emailUsername, name: req.body.shipName}).e
                      "trackColor": "Yellow",
                      "teamName": req.body.teamName});
                      CreateRegistration(newEventRegistration,res)
+                     Event.findOne({eventId: req.body.eventId}).exec().then((_event) =>{
+
+                     Mail.sendMail(req.body.emailUsername, _event.eventStart )
+                     }).catch((error)=>{
+
+
+                        return res.status(500).send({message: error.message|| "server error"})
+
+                     })
+
                      return res.status(201).send(newEventRegistration)
 
             }).catch((error) =>{
@@ -353,10 +364,10 @@ function validateForeignKeys(registration:any , res:any, callback:any) {
 
       if (!ship)
       return callback(res.status(404).send({ message: "Ship with id " + registration.shipId + " was not found" }));
-  
+
  // Checking if event exists
    Event.findOne({ eventId: registration.eventId }).exec().then((event) => {
-              
+
          if (!event)
                return callback(res.status(404).send({ message: "Race with id " + registration.eventId + " was not found" }));
 
@@ -367,7 +378,7 @@ function validateForeignKeys(registration:any , res:any, callback:any) {
        })
    }).catch((error) =>{
          return callback(res.status(500).send({ message: error.message || "Some error occurred while retriving ships" }));
-   }) 
+   })
 };
 
 export default eventRegRouter;

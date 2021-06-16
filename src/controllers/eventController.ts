@@ -176,7 +176,7 @@ eventRouter.put('/events/startEvent/:eventId', async (req,res, ) =>{
    }).catch((error) =>{
         return res.status(500).send({message: error.message|| 'server error'})
     })
-    
+
 })
 
 // Stop Event update PRoperty
