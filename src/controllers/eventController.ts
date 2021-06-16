@@ -36,6 +36,7 @@ eventRouter.post('/events', async (req,res) =>{
         else{
                      event.eventId = 1;
              }
+             event.isLive = false;
              event.save();
              return res.status(201).json(event);
 
@@ -175,7 +176,7 @@ eventRouter.put('/events/startEvent/:eventId', async (req,res, ) =>{
    }).catch((error) =>{
         return res.status(500).send({message: error.message|| 'server error'})
     })
-    
+
 })
 
 // Stop Event update PRoperty

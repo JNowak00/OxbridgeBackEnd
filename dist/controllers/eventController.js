@@ -52,6 +52,7 @@ eventRouter.post('/events', (req, res) => __awaiter(void 0, void 0, void 0, func
         else {
             event.eventId = 1;
         }
+        event.isLive = false;
         event.save();
         return res.status(201).json(event);
     }).catch((error) => {
@@ -133,7 +134,7 @@ eventRouter.get('/events/:eventId', (req, res) => __awaiter(void 0, void 0, void
     });
 }));
 // Updating Event Using eventID
-eventRouter.put('events/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+eventRouter.put('/events/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const newEvent = req.body;
     newEvent.eventId = req.params.eventId;
     event_1.Event.updateOne({ eventId: parseInt(req.params.eventId, 10) }, newEvent).exec().then((_Event) => {
@@ -146,30 +147,34 @@ eventRouter.put('events/:eventId', (req, res) => __awaiter(void 0, void 0, void 
     });
 }));
 // Updating event property "isLive" to true
-eventRouter.put('events/startEvent/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const updatedEvent = { isLive: true, actualEventStart: req.body.actualEventStart };
-    event_1.Event.findOneAndUpdate({ eventId: parseInt(req.params.eventId, 10) }, updatedEvent, { new: true }).exec().then((_event) => {
+eventRouter.put('/events/startEvent/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    event_1.Event.findOneAndUpdate({ eventId: parseInt(req.params.eventId) }, { new: true }).exec().then((_event) => {
         if (!_event) {
             return res.status(404).send({ message: "Event not found with this ID" + req.params.eventId });
         }
-        res.status(202).json(_event);
+        _event.isLive = true;
+        _event.actualEventStart = req.body.actualEventStart;
+        _event.save();
+        return res.status(202).json(_event);
     }).catch((error) => {
-        return res.status(500).send({ message: "Error Updating EventStart" });
+        return res.status(500).send({ message: error.message || 'server error' });
     });
 }));
 // Stop Event update PRoperty
-eventRouter.put('events/stopEvent/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    event_1.Event.findOneAndUpdate({ eventId: parseInt(req.params.eventId, 10) }, { isLive: false }, { new: true }).exec().then((_event) => {
+eventRouter.get('/events/stopEvent/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    event_1.Event.findOneAndUpdate({ eventId: parseInt(req.params.eventId) }).exec().then((_event) => {
         if (!_event) {
             return res.status(404).send({ message: "Event not found with this ID" + req.params.eventId });
         }
-        res.status(202).json(_event);
+        _event.isLive = false;
+        _event.save();
+        return res.status(202).json(_event);
     }).catch((error) => {
         return res.status(500).send({ message: "Error Updating EventStop" });
     });
 }));
 // Deleting Event
-eventRouter.delete('events/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+eventRouter.delete('/events/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     event_1.Event.findOneAndDelete({ eventId: parseInt(req.params.eventId, 10) }).exec().then((_event) => {
         if (!_event) {
             return res.status(404).send({ message: "Event Not found with this ID: " + req.params.eventId });
