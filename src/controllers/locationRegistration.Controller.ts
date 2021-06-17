@@ -263,11 +263,11 @@ locationRouter.get('/locationRegistrations/getLive/:eventId', async (req,res) =>
  locationRouter.get('/locationRegistrations/getReplay/:eventId', async (req,res) =>{
     EventReg.find({ eventId: parseInt(req.params.eventId,10) }, { _id: 0, __v: 0 }).exec().then((eventRegistrations) =>{
 
-        if (eventRegistrations.length !== 0) {
+    if (eventRegistrations.length !== 0) {
             const shipLocations:any[] =[];
             eventRegistrations.forEach(eventRegistration => {
                 pending2++
-                LocationReg.find({ eventRegId: eventRegistration.eventRegId }, { _id: 0, __v: 0 }, { sort: { 'locationTime': 1 } }).exec().then((locationRegistrations) =>{
+LocationReg.find({ eventRegId: eventRegistration.eventRegId }, { _id: 0, __v: 0 }, { sort: { 'locationTime': 1 } }).exec().then((locationRegistrations) =>{
                     pending2--
 
                     if (locationRegistrations) {
@@ -284,9 +284,9 @@ locationRouter.get('/locationRegistrations/getLive/:eventId', async (req,res) =>
                 }).catch((error) =>{
                     return res.status(500).send({ message: error.message || "Some error occurred while retriving registrations" })
 
-                });
-            });
-        } else {
+             });
+          });
+    } else {
             return res.status(200).send({})
         }
     }).catch((error)=>   {
@@ -368,6 +368,7 @@ locationRouter.get('/locationRegistrations/getLive/:eventId', async (req,res) =>
     });
 })
  });
+
  function validateForeignKeys(registration:any, res:any, callback:any) {
 
     // Checking if eventReg exists

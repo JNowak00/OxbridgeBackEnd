@@ -22,39 +22,52 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const dotenv = __importStar(require("dotenv"));
 const user_1 = require("../models/user");
 const express_1 = require("express");
-const AuthenticationController_1 = require("./AuthenticationController");
 const message_1 = require("../models/message");
 // const config = require('../config')
 dotenv.config({ path: 'config/week10.env' });
 const XamarinRouter = express_1.Router();
 XamarinRouter.post('/users/x/brodcast', (req, res) => {
-    AuthenticationController_1.Authorize(req, res, "admin", (error) => {
-        if (error)
-            return error;
-        const title = req.body.title;
-        const msgBody = req.body.msgBody;
-        user_1.User.find().exec().then((users) => {
-            users.forEach(user => {
-                brodcast(user.emailUsername, title, msgBody);
-            });
-            return res.status(200).json(users);
-        }).catch((error) => {
-            return res.status(500).json({ message: error.message, error });
+    // Authorize(req,res, "admin", (error: any) =>{
+    // if(error)
+    // return error;
+    user_1.User.find().exec().then((users) => {
+        const mess = new message_1.Messagez(req.body);
+        users.forEach(user => {
+            const email = user.emailUsername;
+            console.log(email);
+            console.log(mess.MsgTitle);
+            console.log(mess.MsgBody);
+            brodcast(email, mess);
         });
+        return res.status(201).json("MESSAGES SENDED");
+    }).catch((error) => {
+        return res.status(500).json({ message: error.message, error });
     });
+    // })
 });
-function brodcast(emailUsernamez, titlez, msgBodyz) {
-    const mess = new message_1.Message({ emailUsername: emailUsernamez, title: titlez, msgBody: msgBodyz });
-    message_1.Message.findOne().sort('-eventId').exec().then((message) => {
+function brodcast(emailUsernamez, body) {
+    message_1.Messagez.findOne().sort('-messageID').exec().then((message) => {
         if (message) {
-            mess.messageID = message.messageID + 1;
+            body.messageID = message.messageID + 1;
         }
         else {
-            mess.messageID = 1;
+            body.messageID = 1;
         }
-        message.save();
+        const mess = new message_1.Messagez({ messageID: body.messageID, emailUsername: emailUsernamez, MsgTitle: body.MsgTitle, MsgBody: body.MsgBody });
+        console.log("mess:  " + mess);
+        mess.save();
     }).catch((error) => {
         return error;
+    });
+    XamarinRouter.get('/users/x/message', (req, res) => {
+        // Authorize(req,res, "admin", (error: any) =>{
+        // if(error)
+        // return error;
+        message_1.Messagez.find().sort('-messageID').exec().then((messages) => {
+            return res.status(200).send(messages);
+        }).catch((error) => {
+            return res.status(500).send({ message: error.message });
+        });
     });
 }
 exports.default = XamarinRouter;

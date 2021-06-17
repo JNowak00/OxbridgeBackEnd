@@ -23,7 +23,7 @@ const eventRegRouter = Router();
 
          return res.status(201).json(reg);
     })
-   });
+});
 
 /**
  * Function For Creating Registration
@@ -33,35 +33,25 @@ const eventRegRouter = Router();
  */
  function CreateRegistration(newRegistration: any,res:  any){
 
-   if(validateForeignKeys(newRegistration, res)){
+       if(validateForeignKeys(newRegistration, res)){
+            EventReg.findOne({}).sort('-eventRegId').exec().then((_lastEventRegistration) =>{
+               if(_lastEventRegistration)
+               newRegistration.eventRegId = _lastEventRegistration.eventRegId+1;
 
+               else{
+                  newRegistration.eventRegId = 1;
 
+               }
+               newRegistration.save()
+               return newRegistration;
 
-
-      EventReg.findOne({}).sort('-eventRegId').exec().then((_lastEventRegistration) =>{
-         if(_lastEventRegistration)
-         newRegistration.eventRegId = _lastEventRegistration.eventRegId+1;
-
-         else{
-            newRegistration.eventRegId = 1;
-
+            }).catch((error) =>{
+                  if(error){return res.send(error); } });
          }
-         newRegistration.save()
-         return newRegistration;
-
-      }).catch((error) =>{
-            if(error){
-               return res.send(error);
-
-            }
-
-      });
-   }
-   else{
+         else{
       return res.status(500).send("error on the server");
-   }
-
-    }
+ }
+}
 
     /**
      * Get all events
@@ -216,13 +206,8 @@ eventRegRouter.get('/eventRegistrations/getParticipants/:eventId', async (req,re
                               "emailUsername": req.body.emailUsername
                         });
                         Ship.findOne({}).sort('-shipId').exec().then((lastShip)=>{
-                           if(lastShip){
-                              newShip.shipId = lastShip.shipId +1;
-                           }
-                           else{
-                              newShip.shipId = 1;
-                           }
-
+                           if(lastShip){newShip.shipId = lastShip.shipId +1;}
+                           else{newShip.shipId = 1;}
                            newShip.save()
                            const newEventRegistration = new EventReg(
                               {
@@ -348,12 +333,8 @@ function validateForeignKeys(registration:any , res:any): boolean {
 
          if (!event)
                return false;
-
-
-
        }).catch((error) =>{
          return false;
-
        })
    }).catch((error) =>{
          return false;
