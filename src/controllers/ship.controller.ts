@@ -10,7 +10,7 @@ import { AnyObject, Collection } from 'mongoose';
 import { Ship } from '../models/ship';
 import { EventReg } from '../models/eventRegistration';
 import {Router} from 'express'
-import * as Auth from '../controllers/AuthenticationController'
+import {Authorize} from '../controllers/AuthenticationController'
 
 const shipRouter = Router();
 
@@ -25,11 +25,12 @@ const shipRouter = Router();
   */
   shipRouter.post('/ships', async (req,res) =>{
 
-    Auth.Authorize(req,res, "user", (error: any) =>{
+    Authorize(req,res, "user", (error: any,decodedUser: any) =>{
         if(error)
         return error;
 
         const ship = new Ship(req.body);
+        console.log(decodedUser)
 
         Ship.findOne({}).sort('-shipId').exec().then((lastShip) =>{
 
@@ -39,7 +40,7 @@ const shipRouter = Router();
             else{
                 ship.shipId = 1;
             }
-
+            ship.emailUsername = decodedUser.id;
             ship.save()
             return res.status(201).json(ship);
         }).catch((error) =>{
@@ -52,14 +53,21 @@ const shipRouter = Router();
   * Get User Ships
   */
   shipRouter.get('/ships/myShips/fromUsername', async (req,res) =>{
+    Authorize(req,res, "all", (error: any,decodedUser: any) =>{
+        if(error)
+        return error;
 
-    Ship.find({emailUsername: req.body.emailUsername}).exec().then((ships) =>{
 
+    Ship.find({emailUsername: decodedUser.id}).exec().then((ships) =>{
+        if(!ships){
+            return res.status(404).send("NO Ships Founded")
+        }
         return res.status(200).send(ships);
     }).catch((error) =>{
         return res.status(500).send({message: error.message|| "Some error occurred"})
 
     });
+})
  });
 /**
  *
@@ -110,7 +118,7 @@ EventReg.find({ eventId: parseInt(req.params.eventId) }).exec().then((eventRegis
 
     if (eventRegistrations.length !== 0) {
 
-        const ships = [{}];
+        const ships: any = [];
         eventRegistrations.forEach(eventRegistration =>
             {
             pending++;
@@ -145,7 +153,9 @@ EventReg.find({ eventId: parseInt(req.params.eventId) }).exec().then((eventRegis
  *
  */
  shipRouter.put('/ships/:shipId', async (req,res) =>{
-
+    Authorize(req,res, "admin", (error: any) =>{
+        if(error)
+        return error;
 const newShip = new Ship(req.body);
 Ship.findOneAndUpdate({ shipId: parseInt(req.params.shipId) }, newShip).exec().then((ship) =>{
     if (!ship){
@@ -156,12 +166,16 @@ Ship.findOneAndUpdate({ shipId: parseInt(req.params.shipId) }, newShip).exec().t
 }).catch((error) =>{
     return res.status(500).send({ message: "Error updating ship with shipId " + req.params.shipId });
 });
+    })
 
 });
 /**
  * DELETE SHIP
  */
  shipRouter.delete('/ships/:shipId', async (req,res) =>{
+    Authorize(req,res, "all", (error: any) =>{
+        if(error)
+        return error;
 
     Ship.findOneAndDelete({ shipId: parseInt(req.params.shipId) }).exec().then((ship) =>{
         if (!ship){
@@ -172,6 +186,6 @@ Ship.findOneAndUpdate({ shipId: parseInt(req.params.shipId) }, newShip).exec().t
     }).catch((error) =>{
         return res.status(500).send({ message: "Error updating ship with shipId " + req.params.shipId });
     });
-
+    })
 })
 export default shipRouter;

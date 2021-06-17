@@ -13,7 +13,7 @@ import {Event, IEvent } from '../models/event'
 import { EventReg } from '../models/eventRegistration';
 import {Ship, IShip} from '../models/ship'
 import {Router} from 'express'
-
+import { Authorize } from './AuthenticationController';
 const locationRouter = Router();
 
 
@@ -26,16 +26,23 @@ const locationRouter = Router();
 
 
  locationRouter.post('/locationRegistrations/', async (req,res) =>{
+    Authorize(req,res,"user",(error:any)=>{
+        if(error)
+        return error;
+
 
     const locationRegistration = new LocationReg(req.body);
-    module.exports.createLocationRegistration(locationRegistration, res, (error: any, locationReg: any) =>{
+    createLocationRegistration(locationRegistration, res, (error: any, locationReg: any) =>{
 
 
         return res.status(201).json(locationReg);
     });
-
+    })
  });
- exports.createLocationRegistration = (newLocationRegistration: any, res: any, callback: any) => {
+ function createLocationRegistration (newLocationRegistration: any, res: any, callback: any)  {
+    validateForeignKeys(newLocationRegistration,res, (error:any)=>{
+        if(error)
+        return callback(error);
 
 
     newLocationRegistration.locationTime.setHours(newLocationRegistration.locationTime.getHours()+2);
@@ -60,6 +67,7 @@ const locationRouter = Router();
 
         }
     });
+})
 };
 
 
@@ -250,6 +258,7 @@ locationRouter.get('/locationRegistrations/getLive/:eventId', async (req,res) =>
     });
 
  });
+
  let pending2 =0;
  locationRouter.get('/locationRegistrations/getReplay/:eventId', async (req,res) =>{
     EventReg.find({ eventId: parseInt(req.params.eventId,10) }, { _id: 0, __v: 0 }).exec().then((eventRegistrations) =>{
@@ -262,7 +271,11 @@ locationRouter.get('/locationRegistrations/getLive/:eventId', async (req,res) =>
                     pending2--
 
                     if (locationRegistrations) {
-                        const shipLocation = { "locationsRegistrations": locationRegistrations, "color": eventRegistration.trackColor, "shipId": eventRegistration.shipId, "teamName": eventRegistration.teamName }
+                        const shipLocation = {
+                        "locationsRegistrations": locationRegistrations,
+                        "color": eventRegistration.trackColor,
+                        "shipId": eventRegistration.shipId,
+                         "teamName": eventRegistration.teamName }
                         shipLocations.push(shipLocation)
                     }
                     if (pending2 === 0) {
@@ -281,11 +294,11 @@ locationRouter.get('/locationRegistrations/getLive/:eventId', async (req,res) =>
     })
 
  });
+
  let pending3 = 0;
  locationRouter.get('/locationRegistrations/getScoreboard/:eventId', async (req,res) =>{
 
     EventReg.find({ eventId: parseInt(req.params.eventId) }, { _id: 0, __v: 0 }).exec().then((eventRegistrations) => {
-
 
         if (eventRegistrations.length !== 0) {
             const scores:any[] = [];
@@ -329,21 +342,20 @@ locationRouter.get('/locationRegistrations/getLive/:eventId', async (req,res) =>
                     }
                     else
                     pending3--;
-                }).catch((error)=>{
-                    return res.status(500).send({ message: error.message || "Some error occurred while retriving locationRegistrations" });
-                })
-            })
-            if (pending3 === 0)
-                return res.status(200).send(scores);
-        }
-        else
-            return res.status(200).send({});
+                }).catch((error)=>{return res.status(500).send({ message: error.message || "Some error occurred while retriving locationRegistrations" });})})
+            if (pending3 === 0){return res.status(200).send(scores);}}
+        else{return res.status(200).send({});}
     }).catch((error)=>{
         return res.status(500).send({ message: error.message || "Some error occurred while retriving eventRegistrations" })
     })
 
  });
+
+
  locationRouter.delete('/locationRegistrations/deleteFromEventRegId/:eventId', async (req,res) =>{
+    Authorize(req,res,"user",(error:any)=>{
+        if(error)
+        return error;
 
     LocationReg.deleteMany({ eventRegId: parseInt(req.params.eventId) }).exec().then((locationRegistrations) => {
 
@@ -354,6 +366,19 @@ locationRouter.get('/locationRegistrations/getLive/:eventId', async (req,res) =>
     }).catch((error) =>{
         return res.status(500).send({ message: "Error deleting locationRegistrations with eventRegId " + req.params.eventId });
     });
+})
  });
+ function validateForeignKeys(registration:any, res:any, callback:any) {
 
+    // Checking if eventReg exists
+    EventReg.findOne({ eventRegId: registration.eventRegId }).exec().then((eventReg)=> {
+
+        if (!eventReg)
+            return callback(res.status(404).send({ message: "EventRegistration with id " + registration.eventRegId + " was not found" }));
+
+        return callback();
+    }).catch((error) =>{
+        return callback(res.status(500).send({ message: error.message || "Some error occurred while retriving event eventRegistration" }));
+    })
+};
  export default locationRouter;

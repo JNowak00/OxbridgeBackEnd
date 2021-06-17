@@ -11,8 +11,12 @@ import * as jwt from 'jsonwebtoken'
 import { Collection } from 'mongoose';
 import { EventReg, IEventReg } from '../models/eventRegistration';
 import {Router} from 'express'
+import {Mail} from '../mail';
+import { Authorize } from './AuthenticationController';
 
 const eventRouter = Router();
+
+
 
 
 dotenv.config({ path: 'config/week10.env' });
@@ -22,11 +26,10 @@ const secret = 'secret';
 // Create Events
 eventRouter.post('/events', async (req,res) =>{
 
-    // Checking if authorized
-   /* Auth.Authorize(req, res, "admin", function (err) {
-        if (err)
-            return err;
-// */
+    Authorize(req,res,"admin",(error:any)=>{
+        if(error)
+        return error;
+
         const event = new Event(req.body);
 
          Event.findOne().sort('-eventId').exec().then((lastEvent) =>{
@@ -38,6 +41,8 @@ eventRouter.post('/events', async (req,res) =>{
              }
              event.isLive = false;
              event.save();
+
+             Mail.Reminder(event.eventStart)
              return res.status(201).json(event);
 
 
@@ -45,6 +50,7 @@ eventRouter.post('/events', async (req,res) =>{
              if(error)
              return res.status(500).send({message: error.message || "Internal server Error"});
          });
+        })
      });
 
 //  export function hasRoute(){
@@ -79,52 +85,71 @@ Event.find({}).exec().then((events) =>{
 
 });
 let pending = 0;
+
 // Retrive events with ships from username
 eventRouter.get('/events/myEvents/findFromUsername', async (req,res) =>{
 
-   const events: any = [{ }];
-    Ship.find({emailUsername: req.body.emailUsername}).exec().then((ships) =>{
+    Authorize(req,res, "user", (error: any, decoded:any) =>{
+        if(error)
+        return error;
+    console.log(decoded)
+    const events: any = [];
+    Ship.find({emailUsername: decoded.id }).exec().then((ships) =>{
         if(ships.length > 0){
 
-ships.forEach(ship =>{
-    EventReg.find().exec().then((eventRegistrations) =>{
-        if(eventRegistrations){
-            eventRegistrations.forEach(eventRegistration =>{
-                pending++;
-                Ship.findOne({shipId: eventRegistration.shipId}).exec().then((_ship) =>{
-                    if(_ship){
-                        Event.findOne({eventId: eventRegistration.eventId}).exec().then((_event) =>{
-                            if(_event)
-                                events.push({"eventId": _event.eventId, "name": _event.name, "eventStart": _event.eventStart, "eventEnd": _event.eventEnd, "city": _event.city, "eventRegId": eventRegistration.eventRegId, "shipName": _ship.name, "teamName": eventRegistration.teamName, "isLive ": _event.isLive, "actualEventStart": _event.actualEventStart })
-                            if(pending === 0){
-                                return res.status(200).send(events);
-                            }
+            ships.forEach(ship =>{
+                EventReg.find({shipId: ship.shipId}).exec().then((eventRegistrations) =>{
+                    if(eventRegistrations){
+                        eventRegistrations.forEach(eventRegistration =>{
+                            pending++;
+                            Ship.findOne({shipId: ship.shipId}).exec().then((_ship) =>{
+                                if(_ship){
+                                    Event.findOne({eventId: eventRegistration.eventId}).exec().then((_event) =>{
+                                        if(_event){
+                                            events.push({
+                                            "eventId": _event.eventId,
+                                            "name": _event.name,
+                                            "eventStart": _event.eventStart,
+                                            "eventEnd": _event.eventEnd,
+                                             "city": _event.city,
+                                             "eventRegId": eventRegistration.eventRegId,
+                                             "shipName": _ship.name,
+                                             "teamName": eventRegistration.teamName,
+                                             "isLive ": _event.isLive,
+                                             "actualEventStart": _event.actualEventStart })
+                                            }
+                                            pending--;
+                                            if(pending === 0){
+                                                return res.status(200).send(events);
+                                            }
+
+                                        }).catch((error) =>{
+
+                                        if(error)
+                                            return res.status(500).send('error');
+                                                        })
+                                        }
                             }).catch((error) =>{
-
-                            if(error)
-                                return res.status(500).send('error');
-                                            })
-                            }
+                                return res.status(500).send('error')})
+                        }) }
                 }).catch((error) =>{
-                    return res.status(500).send('error')})
-            }) }
-     }).catch((error) =>{
-            return res.status(500).send('error')
+                        return res.status(500).send('error')
 
-        })
-    });
-}
-else{
+                    })
+                });
+
+        }
+    else{
             return res.status(200).send(events);
         }
 
 
     }).catch((error) =>{
         if(error)
-            return res.status(500).send({message: error.message || 'internal server error'});
+            return res.status(500).send({message: error.message });
     });
 
-
+})
 });
 // Find single event with the given eventID
 
@@ -146,6 +171,10 @@ Event.findOne({eventId: parseInt(req.params.eventId, 10)}).exec().then((foundEve
 });
 // Updating Event Using eventID
 eventRouter.put('/events/:eventId', async (req,res)  =>{
+    // Authorize(req,res,"admin",(error:any)=>{
+       // if(error)
+       // return error;
+
     const newEvent = req.body;
     newEvent.eventId = req.params.eventId;
     Event.updateOne({eventId: parseInt(req.params.eventId, 10)}, newEvent).exec().then((_Event) =>{
@@ -159,11 +188,15 @@ eventRouter.put('/events/:eventId', async (req,res)  =>{
         return res.status(500).send({message: error.message || "ERROR WHILE UPDATING bikeRackStation with station Id" + req.params.eventId})
     })
 
-
+   // })
 });
 // Updating event property "isLive" to true
 
 eventRouter.put('/events/startEvent/:eventId', async (req,res, ) =>{
+    Authorize(req,res,"admin",(error:any)=>{
+        if(error)
+        return error;
+
 
     Event.findOneAndUpdate({eventId: parseInt(req.params.eventId)},{new: true}).exec().then((_event) =>{
         if(!_event){
@@ -176,26 +209,36 @@ eventRouter.put('/events/startEvent/:eventId', async (req,res, ) =>{
    }).catch((error) =>{
         return res.status(500).send({message: error.message|| 'server error'})
     })
-
+    })
 })
 
 // Stop Event update PRoperty
 eventRouter.get('/events/stopEvent/:eventId', async (req,res) =>{
 
-    Event.findOneAndUpdate({eventId: parseInt(req.params.eventId)}).exec().then((_event) =>{
+Authorize(req,res,"admin",(error:any)=>{
+        if(error)
+        return error;
+
+    Event.findOneAndUpdate({eventId: parseInt(req.params.eventId)},{new:true}).exec().then((_event) =>{
         if(!_event){
         return res.status(404).send({message: "Event not found with this ID"+ req.params.eventId})
         }
         _event.isLive = false;
+        _event.actualEventStart = null;
         _event.save();
         return res.status(202).json(_event)
    }).catch((error) =>{
-        return res.status(500).send({message: "Error Updating EventStop"})
+        return res.status(500).send({message: error.message||"Error Updating EventStop"})
     })
+})
 })
 
 // Deleting Event
 eventRouter.delete('/events/:eventId', async (req,res) =>{
+    Authorize(req,res,"user",(error:any)=>{
+        if(error)
+        return error;
+
 
     Event.findOneAndDelete({eventId: parseInt(req.params.eventId, 10)}).exec().then((_event) =>{
         if(!_event){
@@ -219,7 +262,7 @@ eventRouter.delete('/events/:eventId', async (req,res) =>{
 
         return res.status(500).send({ message: "Error deleting event with eventId " + req.params.eventId });
     })
-
+    })
 })
 
 export default eventRouter;

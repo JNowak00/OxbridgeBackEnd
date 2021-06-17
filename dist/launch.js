@@ -41,8 +41,9 @@ app.use(express_1.default.json());
 app.use(bodyParser.json());
 app.use(routes_1.default);
 const port = 3000;
-const server = app.listen(port, () => {
+const ip = '192.168.1.245';
+const server = app.listen(port, ip, () => {
     console.log('Running in this mode: ' + process.env.NODE_ENV);
-    console.log('This server is listening at port:' + port + 'ip: ');
+    console.log('This server is listening at port:' + port);
 });
 //# sourceMappingURL=launch.js.map

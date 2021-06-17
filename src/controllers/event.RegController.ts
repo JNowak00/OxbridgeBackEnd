@@ -1,46 +1,42 @@
-import express from 'express';
-import cors from 'cors';
-import * as bodyParser from 'body-parser';
 import * as dotenv from 'dotenv';
 import {EventReg, IEventReg} from '../models/eventRegistration'
-import { DB } from '../Sessions/DB';
 import * as bcrypt from 'bcrypt'
-import * as jwt from 'jsonwebtoken'
-import { Collection } from 'mongoose';
 import { IShip, Ship } from '../models/ship';
 import { User } from '../models/user';
 import {Event} from '../models/event'
 import {Router} from 'express'
 import {Mail} from '../mail'
+import {Authorize} from '../controllers/AuthenticationController'
 
 
- dotenv.config({ path: 'config/week10.env' });
 const eventRegRouter = Router();
-
-
-
-
- const secret = 'secret';
 
 
  eventRegRouter.post('/eventRegistrations/', async (req,res) =>{
 
+   Authorize(req,res,"user",(error:any)=>{
+      if(error)
+      return error;
 
       const reg = new EventReg(req.body);
       CreateRegistration(reg,res)
 
-
          return res.status(201).json(reg);
-    }
-         );
+    })
+   });
+
+/**
+ * Function For Creating Registration
+ * --Used in PostEventReg Request, SingUp for event and AddParticipant Route
+ * @param newRegistration
+ * @param res
+ */
  function CreateRegistration(newRegistration: any,res:  any){
 
-   validateForeignKeys(newRegistration, res, (err: any) => {
-      if (err)
-          return err;
-   })
+   if(validateForeignKeys(newRegistration, res)){
 
-    const newEventReg = newRegistration;
+
+
 
       EventReg.findOne({}).sort('-eventRegId').exec().then((_lastEventRegistration) =>{
          if(_lastEventRegistration)
@@ -50,8 +46,8 @@ const eventRegRouter = Router();
             newRegistration.eventRegId = 1;
 
          }
-         newEventReg.save()
-         return newEventReg;
+         newRegistration.save()
+         return newRegistration;
 
       }).catch((error) =>{
             if(error){
@@ -60,19 +56,28 @@ const eventRegRouter = Router();
             }
 
       });
+   }
+   else{
+      return res.status(500).send("error on the server");
+   }
 
     }
+
     /**
      * Get all events
      */
      eventRegRouter.get('/eventRegistrations', async (req,res) =>{
+      Authorize(req,res,"user",(error:any)=>{
+         if(error)
+         return error;
+
    EventReg.find({}).exec().then((_eventRegs) =>{
       return res.status(200).json(_eventRegs)
 
    }).catch((error) =>{
       return res.status(500).send({message: error.message|| "Some Error Occuerrd"})
    })
-
+      })
 
 })
 /**
@@ -81,29 +86,20 @@ const eventRegRouter = Router();
  */
 let pending = 0;
 eventRegRouter.get('/eventRegistrations/getParticipants/:eventId', async (req,res) =>{
-
    const participants: any = [];
    const eventID = parseInt(req.params.eventId);
    EventReg.find({eventId: eventID}).exec().then((eventRegs) =>{
-
       if(!eventRegs||eventRegs.length ===0)
-
       return res.status(404).send("NO PARTICIPANT FOUND")
-
          if(eventRegs){
             eventRegs.forEach(eveReg=>{
                pending++;
 
                Ship.findOne({shipId: eveReg.shipId}).exec().then((ship) =>{
-                  if(!ship){
-                   return res.status(404).send('Ship Not Found');
-}
+                  if(!ship){return res.status(404).send('Ship Not Found');}
                   if(ship){
                      User.findOne({emailUsername: ship.emailUsername}).exec().then((user) =>{
-
-                        if(!user){
-                           return res.status(404).send('User NOT FOUND');
-                        }
+                        if(!user){return res.status(404).send('User NOT FOUND');}
                         if(user){
                           const participant = {
                               "firstname": user.firstname,
@@ -120,32 +116,21 @@ eventRegRouter.get('/eventRegistrations/getParticipants/:eventId', async (req,re
                         if(pending===0){
                            return res.status(200).json(participants);
                         }
-                        }).catch((error) =>{
-
-                           return res.status(500).send('Error retrieving user');
-                        })
-                     }
-
-                     }).catch((error) =>{
-
-                        return res.status(500).send('Error in server');});
-
-            });
-
-         }
-
-   }).catch((err) =>{
-      return res.status(500).send("ERROR RETRIVING PARTICIPANT")
-   })
-})
+                        }).catch((error) =>{return res.status(500).send('Error retrieving user');})
+                     }}).catch((error) =>{return res.status(500).send('Error in server');});});}
+}).catch((err) =>{return res.status(500).send("ERROR RETRIVING PARTICIPANT")})})
 /**
  * fIND EVENT FROM USERNAME
  * @param eventId
  */
  let pending2 = 0;
  eventRegRouter.get('/eventRegistrations/findEventRegFromUsername/:eventId', async (req,res) =>{
+   Authorize(req,res,"user",(error:any,decodedUser:any)=>{
+      if(error)
+      return error;
 
-   Ship.find({emailUsername: req.body.emailUsername}).exec().then((ships)=>{
+
+   Ship.find({emailUsername: decodedUser.id}).exec().then((ships)=>{
 
          ships.forEach(ship =>{
             pending2++;
@@ -164,12 +149,15 @@ eventRegRouter.get('/eventRegistrations/getParticipants/:eventId', async (req,re
    }).catch((error)=>{
             return res.status(500).send('Error on server side')
       })
-
+   })
 })
 /**\
  * SING UP TO THE EVENT
  */
  eventRegRouter.post('/eventRegistrations/signUp', async (req,res) =>{
+   Authorize(req,res,"user",(error:any)=>{
+      if(error)
+      return error;
 
  Event.findOne({eventCode: req.body.eventCode}).exec().then((_event) =>{
    if(!_event){
@@ -198,7 +186,7 @@ eventRegRouter.get('/eventRegistrations/getParticipants/:eventId', async (req,re
 
       return res.status(500).send("Error retrieving events");
    })
-
+   })
 })
 
 /**
@@ -206,97 +194,81 @@ eventRegRouter.get('/eventRegistrations/getParticipants/:eventId', async (req,re
  *
  */
  eventRegRouter.post('/eventRegistrations/addParticipant', async (req,res) =>{
+   Authorize(req,res,"admin",(error:any)=>{
+      if(error)
+      return error;
 
-User.findOne({emailUsername: req.body.emailUsername}).exec().then((user)=>{
+         User.findOne({emailUsername: req.body.emailUsername}).exec().then((user)=>{
+            if(!user){
+               const hashedPassword = bcrypt.hashSync("1234",10);
+               const newUser = new User({
+                  "emailUsername": req.body.emailUsername,
+                  "firstname": req.body.firstname,
+                  "lastname": req.body.lastname,
+                  "password": hashedPassword,
+                  "role": "user"
+               });
+               newUser.save();}
+            Ship.findOne({emailUsername: req.body.emailUsername, name: req.body.shipName}).exec().then((ship)=>{
+                     if(!ship){
+                        const newShip = new Ship({
+                              "name": req.body.shipName,
+                              "emailUsername": req.body.emailUsername
+                        });
+                        Ship.findOne({}).sort('-shipId').exec().then((lastShip)=>{
+                           if(lastShip){
+                              newShip.shipId = lastShip.shipId +1;
+                           }
+                           else{
+                              newShip.shipId = 1;
+                           }
 
-if(!user){
-   const hashedPassword = bcrypt.hashSync("1234",10);
-   const newUser = new User({
-      "emailUsername": req.body.emailUsername,
-      "firstname": req.body.firstname,
-      "lastname": req.body.lastname,
-      "password": hashedPassword,
-      "role": "user"
+                           newShip.save()
+                           const newEventRegistration = new EventReg(
+                              {
+                                 "eventId": req.body.eventId,
+                                 "shipId": newShip.shipId,
+                                 "trackColor": "Yellow",
+                                 "teamName": req.body.teamName});
+                                 CreateRegistration(newEventRegistration,res)
+                                 Event.findOne({eventId: req.body.eventId}).exec().then((_event) =>{
 
+                                 Mail.sendMail(req.body.emailUsername, _event.eventStart )
+                                 }).catch((error)=>{return res.status(500).send({message: error.message|| "server error"})})
+
+                           return res.status(201).send(newEventRegistration)
+
+                        }).catch((error) =>{return res.status(500).send({message: error.message})})
+                     }
+                     else{
+                           const newEventRegistration = new EventReg(
+                              {
+                              "eventId": req.body.eventId,
+                                 "shipId": ship.shipId,
+                                 "trackColor": "Yellow",
+                                 "teamName": req.body.teamName});
+                                 CreateRegistration(newEventRegistration,res)
+                                 // Event.findOne({eventId: req.body.eventId}).exec().then((_event) =>{
+
+                                  //  Mail.sendMail(req.body.emailUsername, _event.eventStart )
+                                // }).catch((error) =>{
+                                 //   return res.status(500).send({message: error.message|| 'SERVER ERROR'});
+                                 // })
+                                 return res.status(201).send(newEventRegistration);
+                           }
+            }).catch((error) =>{return res.status(500).send({message: error.message})})
+      }).catch((error)=>{return res.status(500).send("Error retrieving users");})
+   })
    });
-   newUser.save();
-}
-Ship.findOne({emailUsername: req.body.emailUsername, name: req.body.shipName}).exec().then((ship)=>{
-
-         if(!ship){
-
-            const newShip = new Ship({
-                  "name": req.body.shipName,
-                  "emailUsername": req.body.emailUsername
-            });
-            Ship.findOne({}).sort('-shipId').exec().then((lastShip)=>{
-               if(lastShip){
-                  newShip.shipId = lastShip.shipId +1;
-               }
-               else{
-                  newShip.shipId = 1;
-               }
-
-               newShip.save()
-               const newEventRegistration = new EventReg(
-                  {
-                     "eventId": req.body.eventId,
-                     "shipId": newShip.shipId,
-                     "trackColor": "Yellow",
-                     "teamName": req.body.teamName});
-                     CreateRegistration(newEventRegistration,res)
-                     Event.findOne({eventId: req.body.eventId}).exec().then((_event) =>{
-
-                     Mail.sendMail(req.body.emailUsername, _event.eventStart )
-                     }).catch((error)=>{
-
-
-                        return res.status(500).send({message: error.message|| "server error"})
-
-                     })
-
-                     return res.status(201).send(newEventRegistration)
-
-            }).catch((error) =>{
-
-                return res.status(500).send({message: error.message})
-            })
-
-
-
-            }
-         else{
-               const newEventRegistration = new EventReg(
-                  {
-                  "eventId": req.body.eventId,
-                     "shipId": ship.shipId,
-                     "trackColor": "Yellow",
-                     "teamName": req.body.teamName});
-                     CreateRegistration(newEventRegistration,res)
-                     return res.status(201).send(newEventRegistration);
-
-               }
-
-         }).catch((error) =>{
-            return res.status(500).send({message: error.message})
-         })
-
-
-
-}).catch((error)=>{
-
-   return res.status(500).send("Error retrieving users");
-
-})
 
 
 
 
-
-
-});
 // Update User with EventRegId
 eventRegRouter.put('/eventRegistrations/updateParticipant/:eventRegId', async (req,res) =>{
+   Authorize(req,res,"admin",(error:any)=>{
+      if(error)
+      return error;
 
  const  eventID = parseInt(req.params.eventRegId,10);
  EventReg.findOneAndUpdate({eventRegId: eventID}, req.body).exec().then((eventReg)=>{
@@ -339,10 +311,14 @@ eventRegRouter.put('/eventRegistrations/updateParticipant/:eventRegId', async (r
     return res.status(500).send({message: "Error Updating eventRegistration with eventRegId: "+req.params.eventRegId})
  })
 })
+})
 
 
 
 eventRegRouter.delete('/eventRegistrations/:eventRegId', async (req,res) =>{
+   Authorize(req,res,"all",(error:any)=>{
+      if(error)
+      return error;
 
    const eventRID = parseInt(req.params.eventRegId,10)
    EventReg.findOneAndDelete({eventRegId: eventRID}).exec().then((eventRegistration)=>{
@@ -357,28 +333,32 @@ eventRegRouter.delete('/eventRegistrations/:eventRegId', async (req,res) =>{
       return res.status(500).send({message: "Error deleting eventRegistration with eventRegId: "+ req.params.eventRegId})
    })
 })
+})
 
-function validateForeignKeys(registration:any , res:any, callback:any) {
+function validateForeignKeys(registration:any , res:any): boolean {
    // Checking if ship exists
    Ship.findOne({ shipId: registration.shipId }).exec().then((ship) =>{
 
       if (!ship)
-      return callback(res.status(404).send({ message: "Ship with id " + registration.shipId + " was not found" }));
+      return false;
+
 
  // Checking if event exists
    Event.findOne({ eventId: registration.eventId }).exec().then((event) => {
 
          if (!event)
-               return callback(res.status(404).send({ message: "Race with id " + registration.eventId + " was not found" }));
+               return false;
 
-         return callback();
+
+
        }).catch((error) =>{
-         return callback(res.status(500).send({ message: error.message || "Some error occurred while retriving races" }));
+         return false;
 
        })
    }).catch((error) =>{
-         return callback(res.status(500).send({ message: error.message || "Some error occurred while retriving ships" }));
+         return false;
    })
+   return true;
 };
 
 export default eventRegRouter;

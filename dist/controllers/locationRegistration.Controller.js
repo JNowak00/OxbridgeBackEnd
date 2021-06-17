@@ -36,33 +36,43 @@ const event_1 = require("../models/event");
 const eventRegistration_1 = require("../models/eventRegistration");
 const ship_1 = require("../models/ship");
 const express_1 = require("express");
+const AuthenticationController_1 = require("./AuthenticationController");
 const locationRouter = express_1.Router();
 dotenv.config({ path: 'config/week10.env' });
 const secret = 'secret';
 locationRouter.post('/locationRegistrations/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const locationRegistration = new locationRegistration_1.LocationReg(req.body);
-    module.exports.createLocationRegistration(locationRegistration, res, (error, locationReg) => {
-        return res.status(201).json(locationReg);
+    AuthenticationController_1.Authorize(req, res, "user", (error) => {
+        if (error)
+            return error;
+        const locationRegistration = new locationRegistration_1.LocationReg(req.body);
+        createLocationRegistration(locationRegistration, res, (error, locationReg) => {
+            return res.status(201).json(locationReg);
+        });
     });
 }));
-exports.createLocationRegistration = (newLocationRegistration, res, callback) => {
-    newLocationRegistration.locationTime.setHours(newLocationRegistration.locationTime.getHours() + 2);
-    CheckRacePoint(newLocationRegistration, res, function (updatedRegistration) {
-        if (updatedRegistration) {
-            newLocationRegistration = updatedRegistration;
-            locationRegistration_1.LocationReg.findOne({}).sort('-regId').exec().then((lastRegistration) => {
-                if (lastRegistration)
-                    newLocationRegistration.regId = lastRegistration.regId + 1;
-                else
-                    newLocationRegistration.regId = 1;
-                newLocationRegistration.save();
-                return callback(null, newLocationRegistration);
-            }).catch((error) => {
-                return callback(res.status(500).send({ message: error.message || "Some error occurred while retriving locationRegistrations" }));
-            });
-        }
+function createLocationRegistration(newLocationRegistration, res, callback) {
+    validateForeignKeys(newLocationRegistration, res, (error) => {
+        if (error)
+            return callback(error);
+        newLocationRegistration.locationTime.setHours(newLocationRegistration.locationTime.getHours() + 2);
+        CheckRacePoint(newLocationRegistration, res, function (updatedRegistration) {
+            if (updatedRegistration) {
+                newLocationRegistration = updatedRegistration;
+                locationRegistration_1.LocationReg.findOne({}).sort('-regId').exec().then((lastRegistration) => {
+                    if (lastRegistration)
+                        newLocationRegistration.regId = lastRegistration.regId + 1;
+                    else
+                        newLocationRegistration.regId = 1;
+                    newLocationRegistration.save();
+                    return callback(null, newLocationRegistration);
+                }).catch((error) => {
+                    return callback(res.status(500).send({ message: error.message || "Some error occurred while retriving locationRegistrations" }));
+                });
+            }
+        });
     });
-};
+}
+;
 function CheckRacePoint(registration, res, callback) {
     eventRegistration_1.EventReg.findOne({ eventRegId: registration.eventRegId }, { _id: 0, __v: 0 }).exec().then((eventRegistration) => {
         let nextRacePointNumber = 2;
@@ -222,7 +232,12 @@ locationRouter.get('/locationRegistrations/getReplay/:eventId', (req, res) => __
                 locationRegistration_1.LocationReg.find({ eventRegId: eventRegistration.eventRegId }, { _id: 0, __v: 0 }, { sort: { 'locationTime': 1 } }).exec().then((locationRegistrations) => {
                     pending2--;
                     if (locationRegistrations) {
-                        const shipLocation = { "locationsRegistrations": locationRegistrations, "color": eventRegistration.trackColor, "shipId": eventRegistration.shipId, "teamName": eventRegistration.teamName };
+                        const shipLocation = {
+                            "locationsRegistrations": locationRegistrations,
+                            "color": eventRegistration.trackColor,
+                            "shipId": eventRegistration.shipId,
+                            "teamName": eventRegistration.teamName
+                        };
                         shipLocations.push(shipLocation);
                     }
                     if (pending2 === 0) {
@@ -279,27 +294,42 @@ locationRouter.get('/locationRegistrations/getScoreboard/:eventId', (req, res) =
                     }
                     else
                         pending3--;
-                }).catch((error) => {
-                    return res.status(500).send({ message: error.message || "Some error occurred while retriving locationRegistrations" });
-                });
+                }).catch((error) => { return res.status(500).send({ message: error.message || "Some error occurred while retriving locationRegistrations" }); });
             });
-            if (pending3 === 0)
+            if (pending3 === 0) {
                 return res.status(200).send(scores);
+            }
         }
-        else
+        else {
             return res.status(200).send({});
+        }
     }).catch((error) => {
         return res.status(500).send({ message: error.message || "Some error occurred while retriving eventRegistrations" });
     });
 }));
 locationRouter.delete('/locationRegistrations/deleteFromEventRegId/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    locationRegistration_1.LocationReg.deleteMany({ eventRegId: parseInt(req.params.eventId) }).exec().then((locationRegistrations) => {
-        if (!locationRegistrations)
-            return res.status(404).send({ message: "LocationRegistrations not found with eventRegId " + req.params.eventId });
-        res.status(202).json(locationRegistrations);
-    }).catch((error) => {
-        return res.status(500).send({ message: "Error deleting locationRegistrations with eventRegId " + req.params.eventId });
+    AuthenticationController_1.Authorize(req, res, "user", (error) => {
+        if (error)
+            return error;
+        locationRegistration_1.LocationReg.deleteMany({ eventRegId: parseInt(req.params.eventId) }).exec().then((locationRegistrations) => {
+            if (!locationRegistrations)
+                return res.status(404).send({ message: "LocationRegistrations not found with eventRegId " + req.params.eventId });
+            res.status(202).json(locationRegistrations);
+        }).catch((error) => {
+            return res.status(500).send({ message: "Error deleting locationRegistrations with eventRegId " + req.params.eventId });
+        });
     });
 }));
+function validateForeignKeys(registration, res, callback) {
+    // Checking if eventReg exists
+    eventRegistration_1.EventReg.findOne({ eventRegId: registration.eventRegId }).exec().then((eventReg) => {
+        if (!eventReg)
+            return callback(res.status(404).send({ message: "EventRegistration with id " + registration.eventRegId + " was not found" }));
+        return callback();
+    }).catch((error) => {
+        return callback(res.status(500).send({ message: error.message || "Some error occurred while retriving event eventRegistration" }));
+    });
+}
+;
 exports.default = locationRouter;
 //# sourceMappingURL=locationRegistration.Controller.js.map

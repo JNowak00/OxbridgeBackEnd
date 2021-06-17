@@ -27,65 +27,69 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const dotenv = __importStar(require("dotenv"));
 const user_1 = require("../models/user");
-const bcrypt = __importStar(require("bcrypt"));
+const bcrypt_1 = __importDefault(require("bcrypt"));
 const jwt = __importStar(require("jsonwebtoken"));
 const express_1 = require("express");
+const AuthenticationController_1 = require("./AuthenticationController");
+// const config = require('../config')
 dotenv.config({ path: 'config/week10.env' });
 const UserRouter = express_1.Router();
 const secret = 'secret';
 // GetAllUsers
 UserRouter.get('/users', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    user_1.User.find().exec().then((results) => {
-        return res.status(200).json(results);
-    }).catch((error) => {
-        return res.status(500).json({
-            message: error.message,
-            error
+    AuthenticationController_1.Authorize(req, res, "admin", (error) => {
+        if (error)
+            return error;
+        user_1.User.find().exec().then((results) => {
+            return res.status(200).json(results);
+        }).catch((error) => {
+            return res.status(500).json({
+                message: error.message,
+                error
+            });
         });
     });
 }));
 // GET USER BY USERNAME
 UserRouter.get('/users/:uid', (req, res) => {
-    user_1.User.findOne({ emailUsername: req.params.uid }).exec().then((result) => {
-        return res.status(200).json(result);
-    }).catch((error) => {
-        return res.status(500).json({
-            message: error.message,
-            error
+    AuthenticationController_1.Authorize(req, res, "user", (error) => {
+        if (error)
+            return error;
+        user_1.User.findOne({ emailUsername: req.params.uid }).exec().then((result) => {
+            return res.status(200).json(result);
+        }).catch((error) => {
+            return res.status(500).json({
+                message: error.message,
+                error
+            });
         });
     });
 });
 // LOGIN API
 UserRouter.post('/users/login', (req, res) => {
     console.log("userTryingtologin");
+    console.log(req.body);
     const username = req.body.emailUsername;
     const passw = req.body.password;
     user_1.User.findOne({ emailUsername: username }).exec().then((_user) => {
         // const passwordIsValid =  bcrypt.compare(user.password,req.body.password);
         const uN = _user.emailUsername;
-        console.log(_user.emailUsername);
-        console.log(passw);
-        console.log(_user.password);
         if (!_user) {
             return res.status(403).json('Username incorrect');
         }
-        /**
-         * TO DO
-         * IMPLEMENT THE BCRYPT COMPARING PASSWORD
-         * IS NOT WORKING PROPERLY RIGHT NOW
-         * PROBLEM:
-         * WONT COMPARE PASSWORD FROM WEBSITE TO DB PASSWORD
-         */
-        const passwordIsValid = bcrypt.compareSync(passw, _user.password);
+        const passwordIsValid = bcrypt_1.default.compareSync(passw, _user.password);
         console.log(passwordIsValid);
         if (!passwordIsValid)
             return res.status(401).send({ auth: false, token: null, message: "Invalid password" });
-        const token = jwt.sign({ id: uN, role: _user.role }, 'secret', { expiresIn: 1000000 });
+        const tokens = jwt.sign({ id: uN, role: _user.role }, 'secret', { expiresIn: 86400 });
         console.log(uN);
-        res.status(200).send({ firstname: _user.firstname, emailUsername: uN, lastname: _user.lastname, auth: true, token });
+        return res.status(200).send({ firstname: _user.firstname, emailUsername: uN, lastname: _user.lastname, auth: true, token: tokens, role: _user.role });
     }).catch((error) => {
         if (error)
             return res.status(500).send('Error on the server');
@@ -93,17 +97,18 @@ UserRouter.post('/users/login', (req, res) => {
 });
 // REGISTER USER
 UserRouter.post('/users/register', (req, res) => {
-    const username = req.body.emailUsername;
-    user_1.User.findOne({ emailUsername: username }).exec().then((user) => {
-        if (user)
+    user_1.User.findOne({ emailUsername: req.body.emailUsername }).exec().then((_user) => {
+        if (_user) {
             return res.status(409).send({ message: "User with that username already exists" });
-        const hashedPassword = bcrypt.hashSync(req.body.password, 10);
-        user = new user_1.User(req.body);
-        user.password = hashedPassword;
-        user.role = "user";
-        user.save();
-        const token = jwt.sign({ id: user.emailUsername, role: "user" }, secret, { expiresIn: 86400 });
-        res.status(201).send({ auth: true, token });
+        }
+        const hashedPassword = bcrypt_1.default.hashSync(req.body.password, 10);
+        _user = new user_1.User(req.body);
+        _user.password = hashedPassword;
+        _user.role = "user";
+        const uN = _user.emailUsername;
+        _user.save();
+        const tokens = jwt.sign({ id: uN, role: _user.role }, 'secret', { expiresIn: 86400 });
+        return res.status(200).send({ firstname: _user.firstname, emailUsername: uN, lastname: _user.lastname, auth: true, token: tokens });
     }).catch((error) => {
         return res.status(500).send({ message: error.message || "Some error occurred while retriving users" });
     });
@@ -118,7 +123,7 @@ UserRouter.post('/users/registerAdmin', (req, res) => {
     user_1.User.findOne({ emailUsername: username }).exec().then((user) => {
         if (!user)
             return res.status(409).send({ message: "User with that username already exists" });
-        const hashedPassword = bcrypt.hashSync(req.body.password, 10);
+        const hashedPassword = bcrypt_1.default.hashSync(req.body.password, 10);
         user = new user_1.User(req.body);
         user.password = hashedPassword;
         user.role = "admin";
@@ -143,25 +148,24 @@ UserRouter.delete('/users/:uid', (req, res) => {
 });
 // Update Existing User
 UserRouter.put('/users/:uid', (req, res) => {
-    const username = req.params.uid;
-    const hashedPassword = bcrypt.hashSync(req.body.password, 10);
-    const Firstname = req.body.firstname;
-    const Lastname = req.body.lastname;
-    const EmailUsername = username;
-    const Password = hashedPassword;
-    user_1.User.findOne({ emailUsername: username }).exec().then((user) => {
-        if (!user) {
-            return res.status(400).send('User Not Found');
-        }
-        user.firstname = Firstname;
-        user.lastname = Lastname;
-        user.emailUsername = EmailUsername;
-        user.password = Password;
-        user.update();
-        // user.updateOne({firstname: Firstname, lastname:Lastname, emailUsername: EmailUsername, password: Password})
-        return res.status(202).json(user);
-    }).catch((error) => {
-        return res.status(500).send({ message: error.message || "Internal Server Error" });
+    AuthenticationController_1.Authorize(req, res, "user", (error, decodedUser) => {
+        if (error)
+            return error;
+        const hashedPassword = bcrypt_1.default.hashSync(req.body.password, 10);
+        const newUser = new user_1.User(req.body);
+        newUser.password = hashedPassword;
+        newUser.role = decodedUser.role;
+        user_1.User.findOne({ emailUsername: newUser.emailUsername }).exec().then((user) => {
+            if (!user) {
+                return res.status(400).send('User Not Found');
+            }
+            const s = bcrypt_1.default.compareSync(req.body.password, user.password);
+            console.log(s);
+            user.update(newUser);
+            return res.status(202).json(user);
+        }).catch((error) => {
+            return res.status(500).send({ message: error.message });
+        });
     });
 });
 exports.default = UserRouter;

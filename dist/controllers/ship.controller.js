@@ -32,7 +32,7 @@ const dotenv = __importStar(require("dotenv"));
 const ship_1 = require("../models/ship");
 const eventRegistration_1 = require("../models/eventRegistration");
 const express_1 = require("express");
-const Auth = __importStar(require("../controllers/AuthenticationController"));
+const AuthenticationController_1 = require("../controllers/AuthenticationController");
 const shipRouter = express_1.Router();
 dotenv.config({ path: 'config/week10.env' });
 const secret = 'secret';
@@ -40,10 +40,11 @@ const secret = 'secret';
  * Crerating Ship
  */
 shipRouter.post('/ships', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    Auth.Authorize(req, res, "user", (error) => {
+    AuthenticationController_1.Authorize(req, res, "user", (error, decodedUser) => {
         if (error)
             return error;
         const ship = new ship_1.Ship(req.body);
+        console.log(decodedUser);
         ship_1.Ship.findOne({}).sort('-shipId').exec().then((lastShip) => {
             if (lastShip) {
                 ship.shipId = lastShip.shipId + 1;
@@ -51,6 +52,7 @@ shipRouter.post('/ships', (req, res) => __awaiter(void 0, void 0, void 0, functi
             else {
                 ship.shipId = 1;
             }
+            ship.emailUsername = decodedUser.id;
             ship.save();
             return res.status(201).json(ship);
         }).catch((error) => {
@@ -62,10 +64,17 @@ shipRouter.post('/ships', (req, res) => __awaiter(void 0, void 0, void 0, functi
  * Get User Ships
  */
 shipRouter.get('/ships/myShips/fromUsername', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    ship_1.Ship.find({ emailUsername: req.body.emailUsername }).exec().then((ships) => {
-        return res.status(200).send(ships);
-    }).catch((error) => {
-        return res.status(500).send({ message: error.message || "Some error occurred" });
+    AuthenticationController_1.Authorize(req, res, "all", (error, decodedUser) => {
+        if (error)
+            return error;
+        ship_1.Ship.find({ emailUsername: decodedUser.id }).exec().then((ships) => {
+            if (!ships) {
+                return res.status(404).send("NO Ships Founded");
+            }
+            return res.status(200).send(ships);
+        }).catch((error) => {
+            return res.status(500).send({ message: error.message || "Some error occurred" });
+        });
     });
 }));
 /**
@@ -102,7 +111,7 @@ let pending = 0;
 shipRouter.get('/ships/fromEventId/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     eventRegistration_1.EventReg.find({ eventId: parseInt(req.params.eventId) }).exec().then((eventRegistrations) => {
         if (eventRegistrations.length !== 0) {
-            const ships = [{}];
+            const ships = [];
             eventRegistrations.forEach(eventRegistration => {
                 pending++;
                 ship_1.Ship.findOne({ shipId: eventRegistration.shipId }).exec().then((ship) => {
@@ -128,27 +137,35 @@ shipRouter.get('/ships/fromEventId/:eventId', (req, res) => __awaiter(void 0, vo
  *
  */
 shipRouter.put('/ships/:shipId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const newShip = new ship_1.Ship(req.body);
-    ship_1.Ship.findOneAndUpdate({ shipId: parseInt(req.params.shipId) }, newShip).exec().then((ship) => {
-        if (!ship) {
-            return res.status(404).send({ message: "Ship not found with shipId " + req.params.shipId });
-        }
-        return res.status(202).json(ship);
-    }).catch((error) => {
-        return res.status(500).send({ message: "Error updating ship with shipId " + req.params.shipId });
+    AuthenticationController_1.Authorize(req, res, "admin", (error) => {
+        if (error)
+            return error;
+        const newShip = new ship_1.Ship(req.body);
+        ship_1.Ship.findOneAndUpdate({ shipId: parseInt(req.params.shipId) }, newShip).exec().then((ship) => {
+            if (!ship) {
+                return res.status(404).send({ message: "Ship not found with shipId " + req.params.shipId });
+            }
+            return res.status(202).json(ship);
+        }).catch((error) => {
+            return res.status(500).send({ message: "Error updating ship with shipId " + req.params.shipId });
+        });
     });
 }));
 /**
  * DELETE SHIP
  */
 shipRouter.delete('/ships/:shipId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    ship_1.Ship.findOneAndDelete({ shipId: parseInt(req.params.shipId) }).exec().then((ship) => {
-        if (!ship) {
-            return res.status(404).send({ message: "Ship not found with shipId " + req.params.shipId });
-        }
-        return res.status(202).json(ship);
-    }).catch((error) => {
-        return res.status(500).send({ message: "Error updating ship with shipId " + req.params.shipId });
+    AuthenticationController_1.Authorize(req, res, "all", (error) => {
+        if (error)
+            return error;
+        ship_1.Ship.findOneAndDelete({ shipId: parseInt(req.params.shipId) }).exec().then((ship) => {
+            if (!ship) {
+                return res.status(404).send({ message: "Ship not found with shipId " + req.params.shipId });
+            }
+            return res.status(202).json(ship);
+        }).catch((error) => {
+            return res.status(500).send({ message: "Error updating ship with shipId " + req.params.shipId });
+        });
     });
 }));
 exports.default = shipRouter;
