@@ -7,6 +7,7 @@ const express_1 = require("express");
 const user_controller_1 = __importDefault(require("./controllers/user.controller"));
 const event_RegController_1 = __importDefault(require("./controllers/event.RegController"));
 const eventController_1 = __importDefault(require("./controllers/eventController"));
+const XamarinController_1 = __importDefault(require("./controllers/XamarinController"));
 const locationRegistration_Controller_1 = __importDefault(require("./controllers/locationRegistration.Controller"));
 const ship_controller_1 = __importDefault(require("./controllers/ship.controller"));
 const racePoints_controller_1 = __importDefault(require("./controllers/racePoints.controller"));
@@ -17,5 +18,6 @@ routes.use('', eventController_1.default);
 routes.use('', locationRegistration_Controller_1.default);
 routes.use('', ship_controller_1.default);
 routes.use('', racePoints_controller_1.default);
+routes.use('', XamarinController_1.default);
 exports.default = routes;
 //# sourceMappingURL=routes.js.map
