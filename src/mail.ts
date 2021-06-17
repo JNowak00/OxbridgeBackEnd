@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import schedule from 'node-schedule';
 
 export class Mail {
 
@@ -25,6 +26,18 @@ transporter.sendMail(mailOptions)
 
 
 console.log("Email sent Successfully");
+}
+public static Reminder(date:Date){
+  const numberOfDaysToSubstract= 3;
+ const RemiderDate = new Date().setDate(date.getDate() - numberOfDaysToSubstract)
+
+  // const reminderDate = new Date(2021, 5, 16, 10, 4-3, 0);
+
+schedule.scheduleJob(date, function(){
+  console.log('The world is going to end today.');
+
+});
+
 }
 
 

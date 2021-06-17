@@ -9,7 +9,7 @@ import * as jwt from 'jsonwebtoken'
 import { AnyObject, Collection } from 'mongoose';
 import {RacePoint} from '../models/racePoint';
 import {Router} from 'express'
-
+import { Authorize } from './AuthenticationController';
 const racePointsRouter = Router();
 
 
@@ -21,7 +21,9 @@ const racePointsRouter = Router();
 
 
  racePointsRouter.post('/racepoints/createRoute/:eventId', async (req,res) =>{
-
+    Authorize(req,res, "user", (error: any) =>{
+        if(error)
+        return error;
     RacePoint.deleteMany({ eventId: parseInt(req.params.eventId)}).exec().then((result) =>{
 
         const racePoints = req.body;
@@ -53,6 +55,7 @@ const racePointsRouter = Router();
 
             return res.status(500).send({ message: error.message || "failed to delete route" })
         })
+    })
 });
 
 

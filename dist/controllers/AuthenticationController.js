@@ -26,7 +26,10 @@ function Authorize(req, res, role, callback) {
     if (!token) {
         return callback(res.status(401).send({ auth: false, message: 'No token provided' }));
     }
-    jwt.verify(token, 'secret', (decoded) => {
+    jwt.verify(token, 'secret', (error, decoded) => {
+        if (error) {
+            return callback(res.status(500).send({ auth: false, message: 'Failed to authenticate token' }));
+        }
         if (role === "admin" && decoded.role !== "admin") {
             return callback(res.status(401).send({ auth: false, message: "Not Authorize" }));
         }

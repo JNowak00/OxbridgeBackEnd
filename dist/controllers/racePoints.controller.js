@@ -31,34 +31,39 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const dotenv = __importStar(require("dotenv"));
 const racePoint_1 = require("../models/racePoint");
 const express_1 = require("express");
+const AuthenticationController_1 = require("./AuthenticationController");
 const racePointsRouter = express_1.Router();
 dotenv.config({ path: 'config/week10.env' });
 const secret = 'secret';
 racePointsRouter.post('/racepoints/createRoute/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    racePoint_1.RacePoint.deleteMany({ eventId: parseInt(req.params.eventId) }).exec().then((result) => {
-        const racePoints = req.body;
-        if (Array.isArray(racePoints)) {
-            racePoint_1.RacePoint.findOne({}).sort('-racePointId').exec().then((lastRacePoint) => {
-                let racepointId = 0;
-                if (lastRacePoint)
-                    racepointId = lastRacePoint.racePointId;
-                else
-                    racepointId = 1;
-                racePoints.forEach(racePoint => {
-                    const racepoint = new racePoint_1.RacePoint(racePoint);
-                    racepointId = racepointId + 1;
-                    racepoint.racePointId = racepointId;
-                    racepoint.save();
+    AuthenticationController_1.Authorize(req, res, "user", (error) => {
+        if (error)
+            return error;
+        racePoint_1.RacePoint.deleteMany({ eventId: parseInt(req.params.eventId) }).exec().then((result) => {
+            const racePoints = req.body;
+            if (Array.isArray(racePoints)) {
+                racePoint_1.RacePoint.findOne({}).sort('-racePointId').exec().then((lastRacePoint) => {
+                    let racepointId = 0;
+                    if (lastRacePoint)
+                        racepointId = lastRacePoint.racePointId;
+                    else
+                        racepointId = 1;
+                    racePoints.forEach(racePoint => {
+                        const racepoint = new racePoint_1.RacePoint(racePoint);
+                        racepointId = racepointId + 1;
+                        racepoint.racePointId = racepointId;
+                        racepoint.save();
+                    });
+                }).catch((error) => {
+                    return res.status(500).send({ message: error.message || "Some error occurred while retriving bikeRacks" });
                 });
-            }).catch((error) => {
-                return res.status(500).send({ message: error.message || "Some error occurred while retriving bikeRacks" });
-            });
-            return res.status(201).json(racePoints);
-        }
-        else
-            return res.status(400).send();
-    }).catch((error) => {
-        return res.status(500).send({ message: error.message || "failed to delete route" });
+                return res.status(201).json(racePoints);
+            }
+            else
+                return res.status(400).send();
+        }).catch((error) => {
+            return res.status(500).send({ message: error.message || "failed to delete route" });
+        });
     });
 }));
 racePointsRouter.get('/racepoints/fromEventId/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
