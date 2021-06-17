@@ -155,20 +155,20 @@ eventRouter.get('/events/:eventId', (req, res) => __awaiter(void 0, void 0, void
 }));
 // Updating Event Using eventID
 eventRouter.put('/events/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    // Authorize(req,res,"admin",(error:any)=>{
-    // if(error)
-    // return error;
-    const newEvent = req.body;
-    newEvent.eventId = req.params.eventId;
-    event_1.Event.updateOne({ eventId: parseInt(req.params.eventId, 10) }, newEvent).exec().then((_Event) => {
-        if (!_Event) {
-            return res.status(404).send({ message: "BikeRackStation not found with stationId " + req.params.eventId });
-        }
-        return res.status(202).json(newEvent);
-    }).catch((error) => {
-        return res.status(500).send({ message: error.message || "ERROR WHILE UPDATING bikeRackStation with station Id" + req.params.eventId });
+    AuthenticationController_1.Authorize(req, res, "admin", (error) => {
+        if (error)
+            return error;
+        const newEvent = req.body;
+        newEvent.eventId = req.params.eventId;
+        event_1.Event.updateOne({ eventId: parseInt(req.params.eventId, 10) }, newEvent).exec().then((_Event) => {
+            if (!_Event) {
+                return res.status(404).send({ message: "BikeRackStation not found with stationId " + req.params.eventId });
+            }
+            return res.status(202).json(newEvent);
+        }).catch((error) => {
+            return res.status(500).send({ message: error.message || "ERROR WHILE UPDATING bikeRackStation with station Id" + req.params.eventId });
+        });
     });
-    // })
 }));
 // Updating event property "isLive" to true
 eventRouter.put('/events/startEvent/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {

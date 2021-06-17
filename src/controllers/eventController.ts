@@ -33,20 +33,14 @@ eventRouter.post('/events', async (req,res) =>{
         const event = new Event(req.body);
 
          Event.findOne().sort('-eventId').exec().then((lastEvent) =>{
-             if(lastEvent){
-                 event.eventId = lastEvent.eventId +1;
-             }
-        else{
-                     event.eventId = 1;
-             }
+             if(lastEvent){event.eventId = lastEvent.eventId +1;}
+        else{event.eventId = 1; }
              event.isLive = false;
              event.save();
 
              Mail.Reminder(event.eventStart)
              return res.status(201).json(event);
-
-
-         }).catch((error) =>{
+            }).catch((error) =>{
              if(error)
              return res.status(500).send({message: error.message || "Internal server Error"});
          });
@@ -171,9 +165,9 @@ Event.findOne({eventId: parseInt(req.params.eventId, 10)}).exec().then((foundEve
 });
 // Updating Event Using eventID
 eventRouter.put('/events/:eventId', async (req,res)  =>{
-    // Authorize(req,res,"admin",(error:any)=>{
-       // if(error)
-       // return error;
+     Authorize(req,res,"admin",(error:any)=>{
+        if(error)
+        return error;
 
     const newEvent = req.body;
     newEvent.eventId = req.params.eventId;
@@ -188,7 +182,7 @@ eventRouter.put('/events/:eventId', async (req,res)  =>{
         return res.status(500).send({message: error.message || "ERROR WHILE UPDATING bikeRackStation with station Id" + req.params.eventId})
     })
 
-   // })
+    })
 });
 // Updating event property "isLive" to true
 
@@ -196,7 +190,6 @@ eventRouter.put('/events/startEvent/:eventId', async (req,res, ) =>{
     Authorize(req,res,"admin",(error:any)=>{
         if(error)
         return error;
-
 
     Event.findOneAndUpdate({eventId: parseInt(req.params.eventId)},{new: true}).exec().then((_event) =>{
         if(!_event){
