@@ -26,7 +26,6 @@ app.use(express.json())
 
  app.use(routes);
 const port = 3000;
-const ip = '192.168.1.245';
 
 const server = app.listen(port,   () =>{
     console.log('Running in this mode: '+process.env.NODE_ENV);
